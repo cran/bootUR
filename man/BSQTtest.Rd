@@ -4,10 +4,11 @@
 \alias{BSQTtest}
 \title{Bootstrap Sequential Quantile Test}
 \usage{
-BSQTtest(y, q = 0:NCOL(y), level = 0.05, boot = "MBB", B = 1999,
+BSQTtest(y, q = 0:NCOL(y), level = 0.05, boot = "AWB", B = 1999,
   l = NULL, ar_AWB = NULL, union = TRUE, p_min = 0, p_max = NULL,
   ic = "MAIC", dc = NULL, detr = NULL, ic_scale = TRUE,
-  verbose = FALSE, show_progress = FALSE)
+  verbose = FALSE, show_progress = FALSE, do_parallel = FALSE,
+  nc = NULL)
 }
 \arguments{
 \item{y}{A \eqn{T}-dimensional vector or a (\eqn{T} x \eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations to be tested for unit roots. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}), or a data frame, as long as each column represents a single time series.}
@@ -18,10 +19,10 @@ BSQTtest(y, q = 0:NCOL(y), level = 0.05, boot = "MBB", B = 1999,
 
 \item{boot}{String for bootstrap method to be used. Options are
 \describe{
-\item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003; Palm, Smeekes and Urbain, 2011), this is the default;}
+\item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003; Palm, Smeekes and Urbain, 2011);}
 \item{\code{"BWB"}}{Block wild bootstrap (Shao, 2011; Smeekes and Urbain, 2014a);}
 \item{\code{"DWB"}}{Dependent wild bootstrap (Shao, 2010; Smeekes and Urbain, 2014a; Rho and Shao, 2019);}
-\item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020);}
+\item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020), this is the default;}
 \item{\code{"SB"}}{Sieve bootstrap (Chang and Park, 2003; Palm, Smeekes and Urbain, 2008; Smeekes, 2013);}
 \item{\code{"SWB"}}{Sieve wild boostrap (Cavaliere and Taylor, 2009; Smeekes and Taylor, 2012).}
 }}
@@ -57,6 +58,10 @@ If \code{union = FALSE}, the default is adding an intercept (a warning is given)
 \item{verbose}{Logical indicator whether or not information on the outcome of the unit root test needs to be printed to the console. Default is \code{FALSE}.}
 
 \item{show_progress}{Logical indicator whether a bootstrap progress update should be printed to the console. Default is FALSE.}
+
+\item{do_parallel}{Logical indicator whether bootstrap loop should be executed in parallel. Parallel computing is only available if OpenMP can be used, if not this option is ignored. Default is FALSE.}
+
+\item{nc}{The number of cores to be used in the parallel loops. Default is to use all but one.}
 }
 \value{
 A list with the following components
@@ -87,7 +92,7 @@ See \code{\link{iADFtest}} for details on the bootstrap algorithm and lag select
 
 \examples{
 # BSQTtest on GDP_BE and GDP_DE
-two_series_BSQTtest <- BSQTtest(MacroTS[, 1:2], boot = "MBB", B = 399,  verbose = TRUE)
+two_series_BSQTtest <- BSQTtest(MacroTS[, 1:2], boot = "AWB", B = 399,  verbose = TRUE)
 }
 \references{
 Chang, Y. and Park, J. (2003). A sieve bootstrap for the test of a unit root. \emph{Journal of Time Series Analysis}, 24(4), 379-400.

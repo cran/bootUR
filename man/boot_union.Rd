@@ -4,9 +4,10 @@
 \alias{boot_union}
 \title{Bootstrap Union Test for Unit Roots}
 \usage{
-boot_union(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
+boot_union(y, level = 0.05, boot = "AWB", B = 1999, l = NULL,
   ar_AWB = NULL, p_min = 0, p_max = NULL, ic = "MAIC",
-  ic_scale = TRUE, verbose = FALSE, show_progress = FALSE)
+  ic_scale = TRUE, verbose = FALSE, show_progress = FALSE,
+  do_parallel = FALSE, nc = NULL)
 }
 \arguments{
 \item{y}{A \eqn{T}-dimensional vector to be tested for unit roots. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}), or a data frame.}
@@ -15,10 +16,10 @@ boot_union(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
 
 \item{boot}{String for bootstrap method to be used. Options are
 \describe{
-\item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003), this is the default;}
+\item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003);}
 \item{\code{"BWB"}}{Block wild bootstrap (Shao, 2011);}
 \item{\code{"DWB"}}{Dependent wild bootstrap (Shao, 2010; Rho and Shao, 2019);}
-\item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020);}
+\item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020), this is the default;}
 \item{\code{"SB" }}{Sieve bootstrap (Palm, Smeekes and Urbain, 2008);}
 \item{\code{"SWB"}}{Sieve wild boostrap (Cavaliere and Taylor, 2009; Smeekes and Taylor, 2012).}
 }}
@@ -40,6 +41,10 @@ boot_union(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
 \item{verbose}{Logical indicator whether or not information on the outcome of the unit root test needs to be printed to the console. Default is \code{FALSE}.}
 
 \item{show_progress}{Logical indicator whether a bootstrap progress update should be printed to the console. Default is FALSE.}
+
+\item{do_parallel}{Logical indicator whether bootstrap loop should be executed in parallel. Parallel computing is only available if OpenMP can be used, if not this option is ignored. Default is FALSE.}
+
+\item{nc}{The number of cores to be used in the parallel loops. Default is to use all but one.}
 }
 \value{
 Value of the union test statistic and the bootstrap p-values.

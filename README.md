@@ -3,6 +3,14 @@
 
 # bootUR: Bootstrap Unit Root Tests
 
+<!-- badges: start -->
+
+[![CRAN\_Version\_Badge](http://www.r-pkg.org/badges/version/bootUR)](https://cran.r-project.org/package=bootUR)
+[![CRAN\_Downloads\_Badge](https://cranlogs.r-pkg.org/badges/grand-total/bootUR)](https://cran.r-project.org/package=bootUR)
+[![License\_GPLv2\_Badge](https://img.shields.io/badge/License-GPLv2-yellow.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+[![License\_GPLv3\_Badge](https://img.shields.io/badge/License-GPLv3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+<!-- badges: end -->
+
 The R package `bootUR` implements several bootstrap tests for unit
 roots, both for single time series and for (potentially) large systems
 of time series.
@@ -10,6 +18,12 @@ of time series.
 ## Installation and Loading
 
 ### Installation
+
+The package can be installed from CRAN using
+
+``` r
+install.packages("bootUR")
+```
 
 The development version of the `bootUR` package can be installed from
 GitHub using
@@ -19,7 +33,12 @@ GitHub using
 devtools::install_github("smeekes/bootUR")
 ```
 
-If you want the vignette to appear in your package, use
+When installing from GitHub, in order to build the package from source,
+you need to have the appropriate R development tools installed (such as
+[Rtools](https://cran.r-project.org/bin/windows/Rtools/) on Windows.)
+
+If you want the vignette to appear in your package when installing from
+GitHub, use
 
 ``` r
 # install.packages("devtools")
@@ -86,6 +105,17 @@ sample_check$all_equal
 #> [1] FALSE
 ```
 
+### Visualizing Missing Data
+
+If you have `ggplot2` installed, you can also plot the missing data
+patterns in your series to get a quick overview. You may need to
+manipulate some arguments to get the plot properly sized (therefore it
+is not run here automatically).
+
+``` r
+plot_missing_values(MacroTS, show_names = TRUE, axis_text_size = 5, legend_size = 6)
+```
+
 ## Univariate Bootstrap Unit Root Tests
 
 ### Augmented Dickey-Fuller Test
@@ -109,7 +139,7 @@ default is by the modified Akaike information criterion (MAIC) proposed
 by Ng and Perron (2001) with the correction of Perron and Qu (2008).
 Other options include the regular Akaike information criterion (AIC), as
 well as the Bayesian information criterion and its modified variant. In
-addition, the rescaling suggested by Cavaliere et al. (2015) is
+addition, the rescaling suggested by Cavaliere et al. (2015) is
 implemented to improve the power of the test under heteroskedasticity;
 this can be turned off by setting `ic_scale = FALSE`. To overwrite
 data-driven lag length selection with a pre-specified lag length, simply
@@ -126,9 +156,15 @@ add an intercept and a trend (`dc = 2`), and compare OLS with QD (GLS)
 detrending. The option `verbose = TRUE` prints easy to read output on
 the console. To see live progress updates on the bootstrap, set
 `show_progress = TRUE`. This is particularly useful for large `B`, so we
-leave it out here. As random number generation is required to draw
-bootstrap samples, we first set the seed of the random number generator
-to obtain replicable results.
+leave it out here. The bootstrap loop can also be run in parallel by
+setting `do_parallel = TRUE`. Note that parallelization requires OpenMP
+to be available on your system, which is typically not the case on
+macOS; see <https://mac.r-project.org/openmp/> for ways to set it up
+manually.
+
+As random number generation is required to draw bootstrap samples, we
+first set the seed of the random number generator to obtain replicable
+results.
 
 ``` r
 set.seed(155776)
@@ -142,7 +178,7 @@ adf_out <- boot_df(GDP_NL, B = 399, boot = "SB", dc = 2, detr = c("OLS", "QD"), 
 #> ----------------------------------------
 #> Type of unit root test performed: detr = QD, dc = intercept and trend
 #> test statistic        p-value 
-#>     -1.5965001      0.4185464
+#>      -1.596500       0.433584
 ```
 
 ### Union of Rejections Test
@@ -163,7 +199,7 @@ union_out <- boot_union(GDP_NL, B = 399, boot = "SWB", verbose = TRUE)
 #> The null hypothesis of a unit root is not rejected at a significance
 #>                     level of 0.05.
 #> test statistic        p-value 
-#>     -0.6722611      0.6090226
+#>     -0.6536848      0.7092732
 ```
 
 ## Panel Unit Root Test
@@ -177,9 +213,9 @@ test. The test is based on averaging the individual test statistics,
 also called the Group-Mean (GM) test in Palm, Smeekes and Urbain (2011).
 
 Palm, Smeekes and Urbain (2011) introduced this test with the moving
-block bootstrap (`boot = "MBB"`), which is the standard option. However,
-this resampling-based method cannot handle unbalancedness, and will
-therefore give an error when applied to `MacroTS`:
+block bootstrap (`boot = "MBB"`). However, this resampling-based method
+cannot handle unbalancedness, and will therefore give an error when
+applied to `MacroTS`:
 
 ``` r
 panel_out <- paneltest(MacroTS, boot = "MBB", B = 399, verbose = TRUE)
@@ -203,10 +239,10 @@ using a different bootstrap method.
 ``` r
 panel_out <- paneltest(MacroTS, boot = "DWB", B = 399, verbose = TRUE)
 #> Panel Bootstrap Group-Mean Union Test
-#> The null hypothesis that all series have a unit root, is
+#> The null hypothesis that all series have a unit root, is not
 #>                   rejected at a significance level of 0.05.
-#>      test statistic    p-value
-#> [1,]     -0.8474483 0.03759398
+#>      test statistic   p-value
+#> [1,]     -0.8552014 0.1253133
 ```
 
 ## Tests for Multiple Time Series
@@ -225,17 +261,18 @@ is given to alert the user. The other options are the same as for
 ``` r
 iADF_out <- iADFtest(MacroTS[, 1:5], boot = "MBB", B = 399, verbose = TRUE, union = FALSE, 
                      dc = 2, detr = "OLS")
-#> Warning in check_inputs(y = y, BSQT_test = BSQT_test, iADF_test = iADF_test, : Missing values cause resampling bootstrap to be executed
-#>                 for each time series individually.
+#> Warning in check_inputs(y = y, BSQT_test = BSQT_test, iADF_test = iADF_test, :
+#> Missing values cause resampling bootstrap to be executed for each time series
+#> individually.
 #> ----------------------------------------
 #> Type of unit root test performed: detr = OLS, dc = intercept and trend
 #> There are 0 stationary time series
 #>        test statistic    p-value
-#> GDP_BE      -2.792169 0.24060150
-#> GDP_DE      -2.774320 0.07769424
-#> GDP_FR      -2.048760 0.52882206
-#> GDP_NL      -2.515285 0.19047619
-#> GDP_UK      -2.449065 0.30325815
+#> GDP_BE      -2.792169 0.23308271
+#> GDP_DE      -2.774320 0.06516291
+#> GDP_FR      -2.048760 0.52380952
+#> GDP_NL      -2.515285 0.22807018
+#> GDP_UK      -2.449065 0.31829574
 ```
 
 Note that `iADFtest` (intentionally) does not provide a correction for
@@ -282,18 +319,18 @@ Urbain (2020).
 N <- ncol(MacroTS)
 # Test each unit sequentially
 BSQT_out1 <- BSQTtest(MacroTS, q = 0:N, boot = "AWB", B = 399, verbose = TRUE)
-#> There is 1 stationary time series, namely: HICP_DE.
+#> There are 2 stationary time series, namely: HICP_BE HICP_DE.
 #> Details of the BSQT ssquential tests:
 #>        Unit H0 Unit H1 Test statistic    p-value
-#> Step 1       0       1      -1.645621 0.02005013
-#> Step 2       1       2      -1.361195 0.17794486
+#> Step 1       0       1      -1.592714 0.03258145
+#> Step 2       1       2      -1.541328 0.03508772
+#> Step 3       2       3      -1.236478 0.32581454
 # Split in four equally sized groups (motivated by the 4 series per country)
 BSQT_out2 <- BSQTtest(MacroTS, q = 0:4 / 4, boot = "AWB", B = 399, verbose = TRUE)
-#> There are 5 stationary time series, namely: GDP_DE HICP_BE HICP_DE HICP_FR HICP_NL.
+#> There are 0 stationary time series.
 #> Details of the BSQT ssquential tests:
 #>        Unit H0 Unit H1 Test statistic    p-value
-#> Step 1       0       5      -1.073928 0.01503759
-#> Step 2       5      10      -0.888729 0.34586466
+#> Step 1       0       5      -1.043973 0.05263158
 ```
 
 ### Bootstrap FDR Controlling Tests
@@ -324,9 +361,55 @@ bFDR_out <- bFDRtest(MacroTS, level = 0.1, boot = "BWB", B = 399, verbose = TRUE
 #> There are 2 stationary time series, namely: HICP_BE HICP_DE
 #> Details of the FDR sequential tests:
 #>         test statistic critical value
-#> HICP_BE      -1.844523      -1.664123
-#> HICP_DE      -1.761817      -1.534352
-#> HICP_NL      -1.457067      -1.458327
+#> HICP_BE      -2.027137      -1.633918
+#> HICP_DE      -1.879959      -1.530622
+#> HICP_NL      -1.271105      -1.480647
+```
+
+## Determining Order of Integration
+
+Generally the unit root tests above would only be used as a single step
+in a larger algorithm to determine the orders of integration of the time
+series in the dataset. In particular, many economic datasets contain
+variables that have order of integration 2, and would so need to be
+differenced twice to eliminate all trends. A standard unit root test
+cannot determine this however. For this purpose, we add the function
+`order_integration()` which performs a sequence of unit root tests to
+determine the orders of each time series.
+
+### How does it work
+
+Starting from a maximum order  (by default equal to 2), it differences
+the data  time until there can be at most one unit root. If the test is
+not rejected for a particular series, we know this series if of order .
+The series for which we do reject are integrated once (such that they
+are differenced  times from their original level), and the test is
+repeated. By doing so until we have classified all series, we obtain a
+full specification of the orders of all time series.
+
+### Implementation
+
+The function allows us to choose which unit root test we want to use.
+Here we take the `bFDRtest`. We don’t only get the orders out, but also
+the appropriately differenced data.
+
+``` r
+out_orders <- order_integration(MacroTS[, 11:15], test = "bFDRtest", B = 399)
+# Orders
+out_orders$order_int
+#> HICP_BE HICP_DE HICP_FR HICP_NL HICP_UK 
+#>       0       0       1       0       1
+# Differenced data
+stationary_data <- out_orders$diff_data
+```
+
+To achieve the differencing, `order_integration()` uses the function
+`diff_mult()` which is also available as stand-alone function in the
+package. Finally, a function is provided to plot the found orders (not
+run):
+
+``` r
+plot_order_integration(out_orders$order_int)
 ```
 
 ## References

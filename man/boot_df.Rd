@@ -4,10 +4,10 @@
 \alias{boot_df}
 \title{Bootstrap augmented Dickey-Fuller Unit Root Test}
 \usage{
-boot_df(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
+boot_df(y, level = 0.05, boot = "AWB", B = 1999, l = NULL,
   ar_AWB = NULL, p_min = 0, p_max = NULL, ic = "MAIC", dc = 1,
   detr = "OLS", ic_scale = TRUE, verbose = FALSE,
-  show_progress = FALSE)
+  show_progress = FALSE, do_parallel = FALSE, nc = NULL)
 }
 \arguments{
 \item{y}{A \eqn{T}-dimensional vector to be tested for unit roots. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}), or a data frame.}
@@ -16,10 +16,10 @@ boot_df(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
 
 \item{boot}{String for bootstrap method to be used. Options are
 \describe{
-\item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003), this is the default;}
+\item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003);}
 \item{\code{"BWB"}}{Block wild bootstrap (Shao, 2011);}
 \item{\code{"DWB"}}{Dependent wild bootstrap (Shao, 2010; Rho and Shao, 2019);}
-\item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020);}
+\item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020), this is the default;}
 \item{\code{"SB"}}{Sieve bootstrap (Chang and Park, 2003; Palm, Smeekes and Urbain, 2008; Smeekes, 2013);}
 \item{\code{"SWB"}}{Sieve wild boostrap (Cavaliere and Taylor, 2009; Smeekes and Taylor, 2012).}
 }}
@@ -53,6 +53,10 @@ If \code{union = FALSE}, the default is adding an intercept (a warning is given)
 \item{verbose}{Logical indicator whether or not information on the outcome of the unit root test needs to be printed to the console. Default is \code{FALSE}.}
 
 \item{show_progress}{Logical indicator whether a bootstrap progress update should be printed to the console. Default is FALSE.}
+
+\item{do_parallel}{Logical indicator whether bootstrap loop should be executed in parallel. Parallel computing is only available if OpenMP can be used, if not this option is ignored. Default is FALSE.}
+
+\item{nc}{The number of cores to be used in the parallel loops. Default is to use all but one.}
 }
 \value{
 Values of the Dickey-Fuller test statistics and corresponding bootstrap p-values.

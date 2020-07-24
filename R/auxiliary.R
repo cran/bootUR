@@ -26,13 +26,14 @@
 #' @seealso \code{\link{iADFtest}}, \code{\link{BSQTtest}}, \code{\link{bFDRtest}}
 #' @keywords internal
 do_tests_and_bootstrap <- function(y, BSQT_test, iADF_test, level, boot, B, l, ar_AWB, union, p_min,
-                                   p_max, ic, dc, detr, ic_scale, q, h_rs, show_progress){
+                                   p_max, ic, dc, detr, ic_scale, q, h_rs, show_progress,
+                                   do_parallel, nc){
   y <- as.matrix(y)
 
   # Check correctness arguments and perform initial calculations and transformations
   inputs <- check_inputs(y = y, BSQT_test = BSQT_test, iADF_test = iADF_test, level = level, boot = boot,
                B = B, l = l, ar_AWB = ar_AWB, union = union, p_min = p_min, p_max = p_max, ic = ic,
-               dc = dc, detr = detr, q = q)
+               dc = dc, detr = detr, q = q, do_parallel = do_parallel, nc = nc)
 
   boot <- inputs$boot
   l <- inputs$l
@@ -47,6 +48,7 @@ do_tests_and_bootstrap <- function(y, BSQT_test, iADF_test, level, boot, B, l, a
   p_vec <- inputs$p_vec
   range_nonmiss <- inputs$range_nonmiss
   joint <- inputs$joint
+  nc <- inputs$nc
 
   # Dimensions
   n <- nrow(y)
@@ -63,7 +65,8 @@ do_tests_and_bootstrap <- function(y, BSQT_test, iADF_test, level, boot, B, l, a
   t_star <- bootstrap_cpp(B = B, boot = boot, u = u_boot, e = res, l = l, s = s_DWB, ar = ar_AWB,
                           ar_est = ar_est, y0 = matrix(0, ncol = N), pmin = p_min, pmax = p_max,
                           ic = ic, dc = dc, detr = detr_int, ic_scale = ic_scale, h_rs = h_rs,
-                          range = range_nonmiss, joint = joint, show_progress = show_progress)
+                          range = range_nonmiss, joint = joint, show_progress = show_progress,
+                          do_parallel = do_parallel, nc = nc)
   tests_i <- adf_tests_panel_cpp(y, pmin = p_min, pmax = p_max, ic = ic, dc = dc, detr = detr_int,
                                   ic_scale = ic_scale, h_rs = h_rs, range = range_nonmiss)
 
@@ -117,7 +120,7 @@ do_tests_and_bootstrap <- function(y, BSQT_test, iADF_test, level, boot, B, l, a
 #' @seealso \code{\link{iADFtest}}, \code{\link{BSQTtest}}, \code{\link{bFDRtest}}
 #' @keywords internal
 check_inputs <- function(y, BSQT_test, iADF_test, level, boot, B, l, ar_AWB, union,
-                         p_min, p_max, ic, dc, detr, q){
+                         p_min, p_max, ic, dc, detr, q, do_parallel, nc){
 
   # Dimensions
   n <- nrow(y)
@@ -127,24 +130,37 @@ check_inputs <- function(y, BSQT_test, iADF_test, level, boot, B, l, ar_AWB, uni
   if (level * (B + 1) < 1) {
     stop("Bootstrap iterations B too low to perform test at desired significance level.")
   }
+  # Set up parallel computing
+  if (is.null(nc)) {
+    if (do_parallel) {
+      nc <- parallel::detectCores() - 1
+    } else {
+      nc <- 1
+    }
+  }
+  if ((nc != round(nc)) | (nc < 1)) {
+    stop("Invalid value for argument nc")
+  }
+
   # Check for missing values or unbalanced panels (MBB, SB)
   check_missing <- check_missing_insample_values(y)
   if (any(check_missing)) {
     stop("Missing values detected inside sample.")
-  } else if (anyNA(y)) {
-    if (boot %in% c("MBB", "SB")) {
-      if (!iADF_test) {
-        stop("Resampling-based bootstraps MBB and SB cannot handle unbalanced series.")
-      } else if (N > 1) {
-        warning("Missing values cause resampling bootstrap to be executed for each time series individually.")
-      }
-    }
+  } else {
+    joint <- TRUE
     check_nonmiss <- find_nonmissing_subsample(y)
     range_nonmiss <- check_nonmiss$range - 1
-    joint <- check_nonmiss$all_equal
-  } else {
-    range_nonmiss <- matrix(c(0, n - 1), nrow = 2, ncol = N)
-    joint <- TRUE
+    all_range_equal <- check_nonmiss$all_equal
+    if (!all_range_equal) {
+      if (boot %in% c("MBB", "SB")) {
+        if (!iADF_test) {
+          stop("Resampling-based bootstraps MBB and SB cannot handle unbalanced series.")
+        } else if (N > 1) {
+          joint <- FALSE
+          warning("Missing values cause resampling bootstrap to be executed for each time series individually.")
+        }
+      }
+    }
   }
 
   # Checks on inputs
@@ -217,19 +233,30 @@ check_inputs <- function(y, BSQT_test, iADF_test, level, boot, B, l, ar_AWB, uni
         warning(paste0(paste0("Input to argument q transformed to fit sequential test: q = c("),
                        paste0(p_vec, collapse = ", "), ")."))
       }
+      if (!identical(unique(p_vec), p_vec)) {
+        p_vec <- unique(p_vec)
+        warning(paste0(paste0("Input to argument q transformed to remove duplicate groups: q = c("),
+                       paste0(p_vec, collapse = ", "), ")."))
+      }
     } else if (is.numeric(q) & all(q >= 0 & q <= 1) & !anyNA(q)) {
       q_vec <- sort(unique(q))
       if (max(q_vec) < 1) {
         q_vec <- c(q_vec, 1)
       }
-      if (min(p_vec) > 0) {
+      if (min(q_vec) > 0) {
         q_vec <- c(0, q_vec)
       }
       if (!identical(q_vec, q)) {
         warning(paste0(paste0("Input to argument q transformed to fit sequential test: q = c("),
                        paste0(q_vec, collapse = ", "), ")"))
       }
-      p_vec <- round(q * N)
+
+      p_vec <- round(q_vec * N)
+      if (!identical(unique(p_vec), p_vec)) {
+        p_vec <- unique(p_vec)
+        warning(paste0(paste0("Input to argument q transformed to remove duplicate groups after transformation to integers: q = c("),
+                       paste0(p_vec, collapse = ", "), ")."))
+      }
     } else {
       stop("Invalid input values for q: must be quantiles or positive integers.")
     }
@@ -268,16 +295,16 @@ check_inputs <- function(y, BSQT_test, iADF_test, level, boot, B, l, ar_AWB, uni
       y <- (x/c) * (x >= 0) * (x<c) + (x >= c) * (x <= 1-c) + ((1-x) / c) * (x > 1-c) * (x <= 1)
       return(y)
     }
-    m <- self.conv(outer(1:n,1:n,"-") / l, 0.43)/ drop(self.conv(0, 0.43))
+    m <- self.conv(outer(1:n, 1:n, "-") / l, 0.43)/ drop(self.conv(0, 0.43))
     ev <- eigen(m)
     e_va <- ev$values
     e_ve <- ev$vectors
     e_va <- diag((e_va > 1e-10) * e_va + (e_va <= 1e-10) * 1e-10)
-    s_DWB <- e_ve%*%sqrt(e_va)
+    s_DWB <- e_ve %*% sqrt(e_va)
   }
   out <- list(boot = boot, l = l, s_DWB = s_DWB, ar_AWB = ar_AWB, dc = dc,
               dc_boot = dc_boot, detr = detr, detr_int = detr_int, ic = ic,
-              p_max = p_max, p_vec = p_vec, range_nonmiss = range_nonmiss, joint = joint)
+              p_max = p_max, p_vec = p_vec, range_nonmiss = range_nonmiss, joint = joint, nc = nc)
 
   return(out)
 }

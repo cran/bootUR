@@ -4,10 +4,10 @@
 #' @param level Desired significance level of the unit root test. Default is 0.05.
 #' @param boot String for bootstrap method to be used. Options are
 #' \describe{
-#' \item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003; Palm, Smeekes and Urbain, 2011), this is the default;}
+#' \item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003; Palm, Smeekes and Urbain, 2011);}
 #' \item{\code{"BWB"}}{Block wild bootstrap (Shao, 2011; Smeekes and Urbain, 2014a);}
 #' \item{\code{"DWB"}}{Dependent wild bootstrap (Shao, 2010; Smeekes and Urbain, 2014a; Rho and Shao, 2019);}
-#' \item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020);}
+#' \item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020), this is the default;}
 #' \item{\code{"SB"}}{Sieve bootstrap (Chang and Park, 2003; Palm, Smeekes and Urbain, 2008; Smeekes, 2013);}
 #' \item{\code{"SWB"}}{Sieve wild boostrap (Cavaliere and Taylor, 2009; Smeekes and Taylor, 2012).}
 #' }
@@ -31,6 +31,8 @@
 #' @param ic_scale Logical indicator whether or not to use the rescaled information criteria of Cavaliere et al. (2015) (\code{TRUE}) or not (\code{FALSE}). Default is \code{TRUE}.
 #' @param verbose Logical indicator whether or not information on the outcome of the unit root test needs to be printed to the console. Default is \code{FALSE}.
 #' @param show_progress Logical indicator whether a bootstrap progress update should be printed to the console. Default is FALSE.
+#' @param do_parallel Logical indicator whether bootstrap loop should be executed in parallel. Parallel computing is only available if OpenMP can be used, if not this option is ignored. Default is FALSE.
+#' @param nc The number of cores to be used in the parallel loops. Default is to use all but one.
 #' @details The options encompass many test proposed in the literature. \code{dc = "OLS"} gives the standard augmented Dickey-Fuller test, while \code{dc = "QD"} provides the DF-GLS test of Elliott, Rothenberg and Stock (1996). The bootstrap algorithm is always based on a residual bootstrap (under the alternative) to obtain residuals rather than a difference-based bootstrap (under the null), see e.g. Palm, Smeekes and Urbain (2008).
 #'
 #' Lag length selection is done automatically in the ADF regression with the specified information criterion. If one of the modified criteria of Ng and Perron (2001) is used, the correction of Perron and Qu (2008) is applied. For very short time series (fewer than 50 time points) the maximum lag length is adjusted downward to avoid potential multicollinearity issues in the bootstrap. To overwrite data-driven lag length selection with a pre-specified lag length, simply set both the minimum `p_min` and maximum lag length `p_max` for the selection algorithm equal to the desired lag length.
@@ -66,17 +68,20 @@
 #' @references Smeekes, S. and Urbain, J.-P. (2014a). A multivariate invariance principle for modified wild bootstrap methods with an application to unit root testing. GSBE Research Memorandum No. RM/14/008, Maastricht University
 #' @examples
 #' # iADFtest on GDP_BE and GDP_DE
-#' two_series_iADFtest <- iADFtest(MacroTS[, 1:2], boot = "MBB", B=399, verbose = TRUE)
-iADFtest <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
+#' two_series_iADFtest <- iADFtest(MacroTS[, 1:2], boot = "MBB", B = 399,
+#' verbose = TRUE)
+iADFtest <- function(y, level = 0.05, boot = "AWB", B = 1999, l = NULL,
                      ar_AWB = NULL, union = TRUE, p_min = 0, p_max = NULL,
                      ic = "MAIC", dc = NULL, detr = NULL, ic_scale = TRUE,
-                     verbose = FALSE, show_progress = FALSE){
+                     verbose = FALSE, show_progress = FALSE,
+                     do_parallel = FALSE, nc = NULL){
 
   inputs <- do_tests_and_bootstrap(y = y, BSQT_test = FALSE, iADF_test = TRUE, level = level,
                                    boot = boot, B = B, l = l, ar_AWB = ar_AWB, union = union,
                                    p_min = p_min, p_max = p_max, ic = ic, dc = dc, detr = detr,
                                    ic_scale = ic_scale, q = NULL, h_rs = 0.1,
-                                   show_progress = show_progress)
+                                   show_progress = show_progress,
+                                   do_parallel = do_parallel, nc = nc)
 
   if (!is.null(colnames(y))) {
     var_names <- colnames(y)
@@ -172,10 +177,10 @@ iADFtest <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
 #' @param y A \eqn{T}-dimensional vector to be tested for unit roots. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}), or a data frame.
 #' @param boot String for bootstrap method to be used. Options are
 #' \describe{
-#' \item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003), this is the default;}
+#' \item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003);}
 #' \item{\code{"BWB"}}{Block wild bootstrap (Shao, 2011);}
 #' \item{\code{"DWB"}}{Dependent wild bootstrap (Shao, 2010; Rho and Shao, 2019);}
-#' \item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020);}
+#' \item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020), this is the default;}
 #' \item{\code{"SB"}}{Sieve bootstrap (Chang and Park, 2003; Palm, Smeekes and Urbain, 2008; Smeekes, 2013);}
 #' \item{\code{"SWB"}}{Sieve wild boostrap (Cavaliere and Taylor, 2009; Smeekes and Taylor, 2012).}
 #' }
@@ -207,9 +212,10 @@ iADFtest <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL,
 #' @examples
 #' # boot_df on GDP_BE
 #' GDP_BE_df <- boot_df(MacroTS[, 1], B = 399, dc = 2, detr = "OLS", verbose = TRUE)
-boot_df <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL, ar_AWB = NULL,
+boot_df <- function(y, level = 0.05, boot = "AWB", B = 1999, l = NULL, ar_AWB = NULL,
                     p_min = 0, p_max = NULL, ic = "MAIC", dc = 1, detr = "OLS",
-                    ic_scale = TRUE, verbose = FALSE, show_progress = FALSE){
+                    ic_scale = TRUE, verbose = FALSE, show_progress = FALSE,
+                    do_parallel = FALSE, nc = NULL){
   if (NCOL(y) > 1) {
     stop("Multiple time series not allowed. Switch to a multivariate method such as iADFtest,
          or change argument y to a univariate time series.")
@@ -221,7 +227,7 @@ boot_df <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL, ar_AWB = 
   out <- iADFtest(y, level = level, boot = boot, B = B, l = l, ar_AWB = ar_AWB,
                   union = FALSE, p_min = p_min, p_max = p_max, ic = ic, dc = dc,
                   detr = detr, ic_scale = ic_scale, verbose = verbose,
-                  show_progress = show_progress)
+                  show_progress = show_progress, do_parallel = do_parallel, nc = nc)
   return(aperm(out$ADF_tests, 3:1)[, , 1])
 }
 
@@ -231,10 +237,10 @@ boot_df <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL, ar_AWB = 
 #' @param y A \eqn{T}-dimensional vector to be tested for unit roots. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}), or a data frame.
 #' @param boot String for bootstrap method to be used. Options are
 #' \describe{
-#' \item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003), this is the default;}
+#' \item{\code{"MBB"}}{Moving blocks bootstrap (Paparoditis and Politis, 2003);}
 #' \item{\code{"BWB"}}{Block wild bootstrap (Shao, 2011);}
 #' \item{\code{"DWB"}}{Dependent wild bootstrap (Shao, 2010; Rho and Shao, 2019);}
-#' \item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020);}
+#' \item{\code{"AWB"}}{Autoregressive wild bootstrap (Smeekes and Urbain, 2014a; Friedrich, Smeekes and Urbain, 2020), this is the default;}
 #' \item{\code{"SB" }}{Sieve bootstrap (Palm, Smeekes and Urbain, 2008);}
 #' \item{\code{"SWB"}}{Sieve wild boostrap (Cavaliere and Taylor, 2009; Smeekes and Taylor, 2012).}
 #' }
@@ -267,9 +273,9 @@ boot_df <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL, ar_AWB = 
 #' @examples
 #' # boot_union on GDP_BE
 #' GDP_BE_df <- boot_union(MacroTS[, 1], B = 399, verbose = TRUE)
-boot_union <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL, ar_AWB = NULL,
+boot_union <- function(y, level = 0.05, boot = "AWB", B = 1999, l = NULL, ar_AWB = NULL,
                        p_min = 0, p_max = NULL, ic = "MAIC", ic_scale = TRUE, verbose = FALSE,
-                       show_progress = FALSE){
+                       show_progress = FALSE, do_parallel = FALSE, nc = NULL){
 
   if (verbose) {
     cat("Bootstrap Test with", boot, "bootstrap method.\n")
@@ -280,7 +286,8 @@ boot_union <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL, ar_AWB
   }
   out <- iADFtest(y, level = level, boot = boot, B = B, l = l, ar_AWB = ar_AWB,
                   union = TRUE, p_min = p_min, p_max = p_max, ic = ic, ic_scale = ic_scale,
-                  verbose = verbose, show_progress = show_progress)
+                  verbose = verbose, show_progress = show_progress,
+                  do_parallel = do_parallel, nc = nc)
   return(out$ADF_tests[1, ])
 }
 
@@ -327,15 +334,16 @@ boot_union <- function(y, level = 0.05, boot = "MBB", B = 1999, l = NULL, ar_AWB
 #' @examples
 #' # bFDRtest on GDP_BE and GDP_DE
 #' two_series_bFDRtest <- bFDRtest(MacroTS[, 1:2], boot = "MBB", B = 399,  verbose = TRUE)
-bFDRtest <- function(y, level = 0.05,  boot = "MBB", B = 1999, l = NULL, ar_AWB = NULL,
+bFDRtest <- function(y, level = 0.05,  boot = "AWB", B = 1999, l = NULL, ar_AWB = NULL,
                      union = TRUE, p_min = 0, p_max = NULL, ic = "MAIC", dc = NULL,
-                     detr = NULL, ic_scale = TRUE, verbose = FALSE, show_progress = FALSE){
+                     detr = NULL, ic_scale = TRUE, verbose = FALSE, show_progress = FALSE,
+                     do_parallel = FALSE, nc = NULL){
 
   inputs <- do_tests_and_bootstrap(y = y, BSQT_test = FALSE, iADF_test = FALSE, level = level,
                                    boot = boot, B = B, l = l, ar_AWB = ar_AWB, union = union,
                                    p_min = p_min, p_max = p_max, ic = ic, dc = dc, detr = detr,
                                    ic_scale = ic_scale, q = NULL, h_rs = 0.1,
-                                   show_progress = show_progress)
+                                   show_progress = show_progress, do_parallel = do_parallel, nc = nc)
 
   if (!is.null(colnames(y))) {
     var_names <- colnames(y)
@@ -461,16 +469,17 @@ bFDRtest <- function(y, level = 0.05,  boot = "MBB", B = 1999, l = NULL, ar_AWB 
 #' @seealso \code{\link{iADFtest}}
 #' @examples
 #' # BSQTtest on GDP_BE and GDP_DE
-#' two_series_BSQTtest <- BSQTtest(MacroTS[, 1:2], boot = "MBB", B = 399,  verbose = TRUE)
-BSQTtest <- function(y, q = 0:NCOL(y), level = 0.05,  boot = "MBB", B = 1999, l = NULL,
+#' two_series_BSQTtest <- BSQTtest(MacroTS[, 1:2], boot = "AWB", B = 399,  verbose = TRUE)
+BSQTtest <- function(y, q = 0:NCOL(y), level = 0.05,  boot = "AWB", B = 1999, l = NULL,
                      ar_AWB = NULL, union = TRUE, p_min = 0, p_max = NULL, ic = "MAIC", dc = NULL,
-                     detr = NULL, ic_scale = TRUE, verbose = FALSE, show_progress = FALSE){
+                     detr = NULL, ic_scale = TRUE, verbose = FALSE, show_progress = FALSE,
+                     do_parallel = FALSE, nc = NULL){
 
   inputs <- do_tests_and_bootstrap(y = y, BSQT_test = TRUE, iADF_test = FALSE, level = level,
                                    boot = boot, B = B, l = l, ar_AWB = ar_AWB, union = union,
                                    p_min = p_min, p_max = p_max, ic = ic, dc = dc, detr = detr,
                                    ic_scale = ic_scale, q = q, h_rs = 0.1,
-                                   show_progress = show_progress)
+                                   show_progress = show_progress, do_parallel = do_parallel, nc = nc)
 
   if (!is.null(colnames(y))) {
     var_names <- colnames(y)
@@ -502,7 +511,7 @@ BSQTtest <- function(y, q = 0:NCOL(y), level = 0.05,  boot = "MBB", B = 1999, l 
           cat(paste("There are ", p_hat, " stationary time series.\n", sep = ""))
         }
       }
-      cat("Details of the BSQT ssquential tests:\n")
+      cat("Details of the BSQT sequential tests:\n")
       print(BSQT_seq)
     }
   } else { # No Union Tests
@@ -586,16 +595,17 @@ BSQTtest <- function(y, q = 0:NCOL(y), level = 0.05,  boot = "MBB", B = 1999, l 
 #' @seealso \code{\link{iADFtest}}
 #' @examples
 #' # paneltest on GDP_BE and GDP_DE
-#' two_series_paneltest <- paneltest(MacroTS[, 1:2], boot = "MBB", B = 399,  verbose = TRUE)
-paneltest <- function(y, level = 0.05,  boot = "MBB", B = 1999, l = NULL, ar_AWB = NULL,
+#' two_series_paneltest <- paneltest(MacroTS[, 1:2], boot = "AWB", B = 399,  verbose = TRUE)
+paneltest <- function(y, level = 0.05,  boot = "AWB", B = 1999, l = NULL, ar_AWB = NULL,
                       union = TRUE, p_min = 0, p_max = NULL, ic = "MAIC", dc = NULL, detr = NULL,
-                      ic_scale = TRUE, verbose = FALSE, show_progress = FALSE){
+                      ic_scale = TRUE, verbose = FALSE, show_progress = FALSE,
+                      do_parallel = FALSE, nc = NULL){
 
   inputs <- do_tests_and_bootstrap(y = y, BSQT_test = FALSE, iADF_test = FALSE, level = level,
                                    boot = boot, B = B, l = l, ar_AWB = ar_AWB, union = union,
                                    p_min = p_min, p_max = p_max, ic = ic, dc = dc, detr = detr,
                                    ic_scale = ic_scale, q = NULL, h_rs = 0.1,
-                                   show_progress = show_progress)
+                                   show_progress = show_progress, do_parallel = do_parallel, nc = nc)
 
   if (union) { # Union Tests
     GM_test <- mean(inputs$test_stats)
@@ -653,8 +663,177 @@ paneltest <- function(y, level = 0.05,  boot = "MBB", B = 1999, l = NULL, ar_AWB
   return(out)
 }
 
+#' Differences of Multiple Time Series
+#' @description Performs differencing of multiple time series, with possibly different orders for each time series.
+#' @param y A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}) or data frame.
+#' @param d An \eqn{N}-dimensional vector containing the orders
+#' @param keep_NAs Logical indicator whether or not to keep the \code{NA} values resulting from differencing at the beginning of the sample. Default is \code{TRUE}. If \code{FALSE}, the entire row containing the \code{NA} values is removed.
+#' @export
+#' @return The appropriately differenced data in the same format as the original data.
+diff_mult <- function(y, d, keep_NAs = TRUE) {
+  x <- as.matrix(y)
+  diffed_x <- matrix(NA, nrow = nrow(x), ncol = ncol(x))
+  if (length(c(d)) != ncol(x)) {
+    stop("Argument d should have length equal to columns of y.")
+  }
+  if (any(d != round(d) | d < 0 )) {
+    stop("Argument d may only contain integer larger or equal to 0.")
+  }
+  for (i in 1:ncol(x)) {
+    if (d[i] >= 1) {
+      diffed_x[(1 + d[i]):nrow(x), i] <- diff(x[, i], differences = d[i])
+    } else if (d[i] == 0) {
+      diffed_x[, i] <- x[, i]
+    }
+  }
+  diffed_y <- y
+  diffed_y[] <- diffed_x
+  if (!keep_NAs & (max(d) > 0)) {
+    diffed_y <- diffed_y[-(1:max(d)), ]
+  }
+  return(diffed_y)
+}
+
+#' Determine Order of Integration
+#' @description Determines the order of integration for each time series in a dataset via a sequence of unit root tests, and differences the data accordingly to eliminate stochastic trends.
+#' @param y A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}) or data frame.
+#' @param max_order The maximum order of integration of the time series. Default is 2.
+#' @param test The unit root tests to be used in the procedure. For multiple time series the options are "iADFtest", "BSQTtest" and "bFDRtest", with "iADFtest" the default. For single time series the options are "boot_df" and "boot_union", with the latter the default.
+#' @param plot_orders Logical indicator whether the resulting orders of integration should be plotted. Default is \code{FALSE}.
+#' @param ... Optional arguments passed to the chosen unit root test function.
+#' @details The function follows the approach laid out in Smeekes and Wijler (2020), where all series is differenced \eqn{d-1} times, where \eqn{d} is the specified maximum order, and these differenced series are tested for unit roots. The series foe which the unit root null is not rejected, are classified as \eqn{I(d)} and removed from consideration. The remaining series are integrated, and tested for unit roots again, leading to a classification of \eqn{I(d-1)} series if the null is not rejected. This is continued until a non-rejection is observed for all time series, or the series are integrated back to their original level. The series for which the null hypothesis is rejected in the final stage are classified as \eqn{I(0)}.
+#'
+#' Care must be taken when using \code{\link{BSQTtest}} when the argument \code{q} is given as a sequence of integers. As at each step series are removed, one may end up with fewer series to test than indicated in \code{q}. While integers larger than the number of series will automatically be removed - along with a warning - by the test, it is recommend to set \code{q} in the form of quantiles.
+#'
+#' Plotting the orders of integration requires the \code{ggplot2} package to be installed; plot will be skipped and a warning is given if not. For plots the function \code{\link{plot_order_integration}} is called. The user may prefer to set \code{plot_orders = FALSE} and call this function directly using the returned value of \code{order_int} in order to have more control over plot settings and save the plot object.
+#' @export
+#' @return A list with the following components
+#' \item{\code{order_int}}{A vector with the found orders of integration of each time series.}
+#' \item{\code{diff_data}}{The appropriately differenced data according to \code{order_int} in the same format as the original data.}
+#' @references Smeekes, S. and Wijler, E. (2020). Unit roots and cointegration. In P. Fuleky (Ed.) \emph{Macroeconomic Forecasting in the Era of Big Data}, Chapter 17, pp. 541-584. \emph{Advanced Studies in Theoretical and Applied Econometrics}, vol. 52. Springer.
+#' @examples
+#' # Use iADFtest to determine the order of GDP_BE and GDP_DE
+#' orders_iADFtest <- order_integration(MacroTS[, 1:2], test = "iADFtest", B = 199)
+order_integration <- function(y, max_order = 2, test = NULL, plot_orders = FALSE, ...) {
+  N <- NCOL(y)
+  if (is.null(test)) {
+    if (N == 1) {
+      test = "boot_union"
+    } else {
+      test = "iADFtest"
+    }
+  }
+  if (!is.null(colnames(y))) {
+    var_names <- colnames(y)
+  } else {
+    var_names <- paste0("Variable ", 1:NCOL(y))
+  }
+  d <- rep(NA, N)
+  names(d) <- var_names
+  yd <- y
+  i_in_yd <- 1:N
+  for (d_i in (max_order - 1):0) {
+    yd <- diff_mult(y[, i_in_yd], rep(d_i, length(i_in_yd)), keep_NAs = FALSE)
+    if (test == "iADFtest") {
+      out <- iADFtest(yd, ...)
+    } else if (test == "bFDRtest" & N > 1) {
+      out <- bFDRtest(yd, ...)
+    } else if (test == "BSQTtest" & N > 1) {
+      out <- BSQTtest(yd, ...)
+    } else if (test == "boot_df" & N == 1) {
+      out <- boot_df(yd, ...)
+    } else if (test == "boot_union" & N == 1) {
+      out <- boot_union(yd, ...)
+    } else {
+      stop("Invalid test argument.")
+    }
+    d[i_in_yd[!out$rej_H0]] <- d_i + 1
+    if (any(out$rej_H0)) {
+      if (d_i == 0) {
+        d[i_in_yd[out$rej_H0]] <- 0
+      } else {
+        i_in_yd <- i_in_yd[out$rej_H0]
+      }
+    } else {
+      break
+    }
+  }
+  if (plot_orders) {
+    if (!requireNamespace("ggplot2", quietly = TRUE)) {
+      warning("Cannot plot orders of integration as package ggplot2 not installed.")
+    } else {
+      g <- plot_order_integration(d)
+      print(g)
+    }
+  }
+  return(list(order_int = d, diff_data = diff_mult(y, d)))
+}
+
+#' Plot Orders of Integration
+#' @description Plots a vector with orders of integration of time series.
+#' @param d T\eqn{N}-dimensional vector with time series' orders of integration. Elements should be named after the respective time series to ensure easy interpretation of the plot.
+#' @param show_names Show the time series' names on the plot (\code{TRUE}) or not (\code{FALSE}). Default is \code{TRUE}.
+#' @param show_legend Logical indicator whether a legend should be displayed. Default is \code{TRUE}.
+#' @param names_size Size of the time series' names if \code{show_names = TRUE}. Default takes \code{ggplot2} defaults.
+#' @param legend_size Size of the text in the legend if \code{show_legend = TRUE}. Default takes \code{ggplot2} defaults.
+#' @param cols Vector with colours for displaying the orders of integration. At least as many colours as orders of integration need to be supplied. Default supplies 4 colours for displaying up to \eqn{I(3)} series.
+#' @export
+#' @details This function requires the package \code{ggplot2} to be installed. If the package is not found, plotting is aborted.
+#' @return A \code{ggplot2} object containing the plot of the orders of integration.
+plot_order_integration <- function(d, show_names = TRUE, show_legend = TRUE,
+                                   names_size = NULL, legend_size = NULL, cols = NULL) {
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Cannot plot orders of integration as package ggplot2 not installed.")
+  } else {
+    if (is.null(cols)) {
+      cols <- c("#1B9E77", "#7570B3", "#D95F02", "#E7298A")
+    }
+    if (max(d) > length(cols)) {
+      stop("Insufficient number of colours supplied to display all orders of integration.")
+    }
+    cols <- cols[unique(d) + 1]
+    n_g <- floor(max(1, length(d) - 5)^(1/3))
+    group <- rep(paste0("g", 1:n_g), each = ceiling(length(d) / n_g))[1:length(d)]
+    df <- data.frame(names = factor(names(d), levels = rev(names(d))),
+                     order = paste0("I(", d, ")"), group = group)
+    if (show_names) {
+      g <- ggplot2::ggplot(df) +
+        ggplot2::geom_col(ggplot2::aes(x = names, y = order, fill = order),
+                          show.legend = show_legend) +
+        ggplot2::labs(y = "Order of Integration", x = "Variables") +
+        ggplot2::coord_flip() +
+        ggplot2::scale_fill_manual(values = cols) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                       panel.grid.minor = ggplot2::element_blank(),
+                       legend.title = ggplot2::element_blank(),
+                       legend.text = ggplot2::element_text(size = legend_size),
+                       axis.text.x = ggplot2::element_text(size = names_size))
+    } else {
+      g <- ggplot2::ggplot(df) +
+        ggplot2::geom_col(ggplot2::aes(x = names, y = order, fill = order),
+                          show.legend = show_legend) +
+        ggplot2::labs(y = "Order of Integration", x = "Variables") +
+        ggplot2::coord_flip() +
+        ggplot2::scale_fill_manual(values = cols) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                       panel.grid.minor = ggplot2::element_blank(),
+                       legend.title = ggplot2::element_blank(),
+                       legend.text = ggplot2::element_text(size = legend_size),
+                       axis.text.x = ggplot2::element_blank())
+    }
+
+    if (n_g > 1) {
+      g <- g + ggplot2::facet_wrap(ggplot2::vars(df$group), nrow = 1, scales = "free_y") +
+        ggplot2::theme(strip.text = ggplot2::element_blank())
+    }
+    return(g)
+  }
+}
+
 #' Check Missing Values in Sample
-#' @param X A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}).
+#' @param X A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}) or data frame.
 #' @export
 #' @return \eqn{N}-dimensional vector, for each series whether missing values are present (\code{TRUE}) or not (\code{FALSE})
 check_missing_insample_values <- function(X) {
@@ -665,7 +844,7 @@ check_missing_insample_values <- function(X) {
 }
 
 #' Find Non-Missing Subsamples
-#' @param X A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}). Assumes a prior check on missing vaues in-sample has been done.
+#' @param X A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}) or data frame. Assumes a prior check on missing values in-sample has been done.
 #' @export
 #' @return A list with the following components
 #' \item{\code{range}}{(2x\eqn{N})-dimensional matrix containing the first and last non-missing observation in each column of X.}
@@ -684,4 +863,101 @@ find_nonmissing_subsample <- function(X) {
   all_equal <- (max(range_nonmiss[1, ]) - min(range_nonmiss[1, ]) == 0) &
     (max(range_nonmiss[2, ]) - min(range_nonmiss[2, ]) == 0)
   return(list(range = range_nonmiss, all_equal = all_equal))
+}
+
+#' Plot Missing Values
+#' @description Plots missing values of different types for a time series dataset.
+#' @param y A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}) or data frame.
+#' @param show_names Show the time series' names on the plot (\code{TRUE}) or not (\code{FALSE}). Default is \code{TRUE}.
+#' @param show_legend Logical indicator whether a legend should be displayed. Default is \code{TRUE}.
+#' @param axis_text_size Size of the text on the axis. Default takes \code{ggplot2} defaults.
+#' @param legend_size Size of the text in the legend if \code{show_legend = TRUE}. Default takes \code{ggplot2} defaults.
+#' @param cols Vector with colours for displaying the different types of data. If the default is overwriten, four colours must be supplied.
+#' @export
+#' @details The function distinguish four types of data: observed data (non-missing) and three missing types. Type \code{"Balanced NA"} indicates where entire rows are missing (\code{NA}). These do not cause unbalancedness as the missing rows can simply be deleted.  Type \code{"Unalanced NA"} are missing values on the beginning or end of the sample, which cause unbalancedness. These affect some (but not all) bootstrap methods, see e.g.~\code{\link{bFDRtest}}. Type \code{"Internal NA"} are missing values inside the sample, which need to be removed before the bootstrap unit root tests can be used.
+#'
+#' This function requires the package \code{ggplot2} to be installed. If the package is not found, plotting is aborted.
+#' @return A \code{ggplot2} object containing the missing values plot.
+plot_missing_values <- function(y, show_names = FALSE, show_legend = TRUE,
+                                axis_text_size = NULL, legend_size = NULL,
+                                cols = NULL) {
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Cannot plot missing values as package ggplot2 not installed.")
+  } else {
+    y <- as.matrix(y)
+    if (!is.null(colnames(y))) {
+      var_names <- colnames(y)
+    } else {
+      var_names <- paste0("Variable ", 1:NCOL(y))
+    }
+    check_missing <- check_missing_insample_values(y)
+    fns <- find_nonmissing_subsample(y)
+    range <- fns$range
+    all_equal <- fns$all_equal
+    missing_type <- c("Observed", "Balanced NA", "Unbalanced NA", "Internal NA")
+    if (is.null(cols)){
+      cols <- c("#4DAF4A", "#377EB8", "#984EA3", "#E41A1C")
+    }
+    if (length(cols) < 4) {
+      stop("Insufficient colors supplied.")
+    }
+    names(cols) <- missing_type
+    x <- array(missing_type[1], dim = dim(y))
+    min_index <- min(range[1, ])
+    max_index <- max(range[2, ])
+    if (min_index > 1) {
+      x[1:(min_index - 1), ] <- missing_type[2]
+    }
+    if (max_index < nrow(x)) {
+      x[(max_index + 1):nrow(x), ] <- missing_type[2]
+    }
+    if (!all_equal) {
+      unb_miss <- is.na(y) * ((1:nrow(x)) >= min_index) * ((1:nrow(x)) <= max_index)
+      x[unb_miss == 1] <- missing_type[3]
+    }
+    if (any(check_missing)) {
+      for (i in (1:ncol(x))[check_missing]) {
+        int_miss_i <- is.na(y[, i]) * ((1:nrow(x)) > range[1, i]) * ((1:nrow(x)) < range[2, i])
+        x[int_miss_i == 1, i] <- missing_type[4]
+      }
+    }
+    col_sel <- cols[sapply(1:4, function(i){any(x == missing_type[i])})]
+    obs <- 1:nrow(x)
+    df <- data.frame(var_names = factor(rep(var_names, each = nrow(x)), levels = var_names),
+                     obs = factor(rep(obs, ncol(x)), levels = rev(obs)),
+                     missing_type = factor(c(x), levels = missing_type))
+
+    if (show_names) {
+      g <- ggplot2::ggplot(data = df, ggplot2::aes(x = var_names, y = obs,
+                                                   fill = missing_type)) +
+        ggplot2::geom_tile(height = 0.8, width = 0.8, show.legend = show_legend) +
+        ggplot2::labs(x = "Variables", y = "Observations", fill = "Missing Type") +
+        ggplot2::scale_fill_manual(values = col_sel) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(size = axis_text_size),
+                       axis.text.y = ggplot2::element_blank(),
+                       legend.title = ggplot2::element_text(size = legend_size),
+                       legend.text = ggplot2::element_text(size = legend_size),
+                       panel.border = ggplot2::element_blank(),
+                       panel.grid.major = ggplot2::element_blank(),
+                       panel.grid.minor = ggplot2::element_blank(),
+                       axis.title = ggplot2::element_text(size = axis_text_size))
+    } else {
+      g <- ggplot2::ggplot(data = df, ggplot2::aes(x = var_names, y = obs,
+                                                   fill = missing_type)) +
+        ggplot2::geom_tile(height = 0.8, width = 0.8, show.legend = show_legend) +
+        ggplot2::labs(x = "Variables", y = "Observations", fill = "Missing Type") +
+        ggplot2::scale_fill_manual(values = col_sel) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(legend.title = ggplot2::element_text(size = legend_size),
+                       legend.text = ggplot2::element_text(size = legend_size),
+                       axis.text.x = ggplot2::element_blank(),
+                       axis.text.y = ggplot2::element_blank(),
+                       panel.border = ggplot2::element_blank(),
+                       panel.grid.major = ggplot2::element_blank(),
+                       panel.grid.minor = ggplot2::element_blank(),
+                       axis.title = ggplot2::element_text(size = axis_text_size))
+    }
+    return(g)
+  }
 }
