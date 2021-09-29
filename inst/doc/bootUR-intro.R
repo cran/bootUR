@@ -33,33 +33,38 @@ sample_check$all_equal
 plot_missing_values(MacroTS, show_names = TRUE, axis_text_size = 5, legend_size = 6)
 
 ## ----adf----------------------------------------------------------------------
-set.seed(155776)
 GDP_NL <- MacroTS[, 4]
-adf_out <- boot_df(GDP_NL, B = 399, boot = "SB", dc = 2, detr = c("OLS", "QD"), verbose = TRUE)
+adf(GDP_NL, deterministics = "trend")
+
+## ----boot_adf-----------------------------------------------------------------
+set.seed(155776)
+boot_adf(GDP_NL, B = 399, bootstrap = "SB", deterministics = "trend", 
+                    detrend = "OLS")
 
 ## ----union--------------------------------------------------------------------
-union_out <- boot_union(GDP_NL, B = 399, boot = "SWB", verbose = TRUE)
+boot_union(GDP_NL, B = 399, bootstrap = "SWB")
 
 ## ----panel--------------------------------------------------------------------
-panel_out <- paneltest(MacroTS, boot = "DWB", B = 399, verbose = TRUE)
+boot_panel(MacroTS, bootstrap = "DWB", B = 399)
 
 ## ----iADF---------------------------------------------------------------------
-iADF_out <- iADFtest(MacroTS[, 1:5], boot = "MBB", B = 399, verbose = TRUE, union = FALSE, 
-                     dc = 2, detr = "OLS")
+ADFtests_out <- boot_ur(MacroTS[, 1:5], bootstrap = "MBB", B = 399, union = FALSE, 
+                        deterministics = "trend", detrend = "OLS")
+print(ADFtests_out)
 
 ## ----BSQT---------------------------------------------------------------------
 N <- ncol(MacroTS)
 # Test each unit sequentially
-BSQT_out1 <- BSQTtest(MacroTS, q = 0:N, boot = "AWB", B = 399, verbose = TRUE)
+boot_sqt(MacroTS, steps = 0:N, bootstrap = "AWB", B = 399)
 # Split in four equally sized groups (motivated by the 4 series per country)
-BSQT_out2 <- BSQTtest(MacroTS, q = 0:4 / 4, boot = "AWB", B = 399, verbose = TRUE)
+boot_sqt(MacroTS, steps = 0:4 / 4, bootstrap = "AWB", B = 399)
 
 ## ----bFDR---------------------------------------------------------------------
 N <- ncol(MacroTS)
-bFDR_out <- bFDRtest(MacroTS[, 1:10], level = 0.1, boot = "BWB", B = 399, verbose = TRUE)
+boot_fdr(MacroTS[, 1:10], level = 0.1, bootstrap = "BWB", B = 399)
 
 ## ----orders-------------------------------------------------------------------
-out_orders <- order_integration(MacroTS[, 11:15], test = "bFDRtest", B = 399)
+out_orders <- order_integration(MacroTS[, 11:15], method = "boot_fdr", B = 399)
 # Orders
 out_orders$order_int
 # Differenced data
