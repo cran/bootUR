@@ -4,15 +4,15 @@
 \alias{boot_union}
 \title{Bootstrap Union Test for Unit Roots}
 \usage{
-boot_union(data, level = 0.05, bootstrap = "AWB", B = 1999,
+boot_union(data, data_name = NULL, bootstrap = "AWB", B = 1999,
   block_length = NULL, ar_AWB = NULL, min_lag = 0, max_lag = NULL,
-  criterion = "MAIC", criterion_scale = TRUE, show_progress = TRUE,
-  do_parallel = FALSE, cores = NULL, data_name = NULL)
+  criterion = "MAIC", criterion_scale = TRUE, union_quantile = 0.05,
+  show_progress = TRUE, do_parallel = TRUE, cores = NULL)
 }
 \arguments{
 \item{data}{A \eqn{T}-dimensional vector to be tested for unit roots. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}), or a data frame.}
 
-\item{level}{Desired significance level of the unit root test. Default is 0.05.}
+\item{data_name}{Optional name for the data, to be used in the output. The default uses the name of the 'data' argument.}
 
 \item{bootstrap}{String for bootstrap method to be used. Options are
 \describe{
@@ -38,13 +38,13 @@ boot_union(data, level = 0.05, bootstrap = "AWB", B = 1999,
 
 \item{criterion_scale}{Logical indicator whether or not to use the rescaled information criteria of Cavaliere et al. (2015) (\code{TRUE}) or not (\code{FALSE}). Default is \code{TRUE}.}
 
+\item{union_quantile}{The quantile of the bootstrap distribution used for scaling the individual statistics in the union. Ideally this should equal the desired significance level of the test. Default is 0.05. This parameter is overwritten when a significance level is provided in the argument \code{level}.}
+
 \item{show_progress}{Logical indicator whether a bootstrap progress update should be printed to the console. Default is FALSE.}
 
-\item{do_parallel}{Logical indicator whether bootstrap loop should be executed in parallel. Parallel computing is only available if OpenMP can be used, if not this option is ignored. Default is FALSE.}
+\item{do_parallel}{Logical indicator whether bootstrap loop should be executed in parallel. Default is TRUE.}
 
 \item{cores}{The number of cores to be used in the parallel loops. Default is to use all but one.}
-
-\item{data_name}{Optional name for the data, to be used in the output. The default uses the name of the 'data' argument.}
 }
 \value{
 An object of class \code{"bootUR"}, \code{"htest"} with the following components:
@@ -73,7 +73,7 @@ Lag length selection is done automatically in the ADF regressions with the speci
 
 \examples{
 # boot_union on GDP_BE
-GDP_BE_df <- boot_union(MacroTS[, 1], B = 399)
+GDP_BE_df <- boot_union(MacroTS[, 1], B = 199, do_parallel = FALSE, show_progress = FALSE)
 print(GDP_BE_df)
 }
 \references{

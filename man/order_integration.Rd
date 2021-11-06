@@ -4,8 +4,8 @@
 \alias{order_integration}
 \title{Determine Order of Integration}
 \usage{
-order_integration(data, max_order = 2, method = "boot_ur",
-  plot_orders = FALSE, ...)
+order_integration(data, max_order = 2, method = "boot_ur", level = 0.05,
+  plot_orders = FALSE, data_name = NULL, ...)
 }
 \arguments{
 \item{data}{A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}) or data frame.}
@@ -14,12 +14,16 @@ order_integration(data, max_order = 2, method = "boot_ur",
 
 \item{method}{The unit root tests to be used in the procedure. For multiple time series the options are "boot_ur", "boot_sqt" and "boot_fdr", with "boot_ur" the default. For single time series the options are "adf", boot_adf", "boot_union" and "boot_ur", with the latter the default.}
 
+\item{level}{Desired significance level of the unit root test. Default is 0.05.}
+
 \item{plot_orders}{Logical indicator whether the resulting orders of integration should be plotted. Default is \code{FALSE}.}
+
+\item{data_name}{Optional name for the data, to be used in the output. The default uses the name of the 'data' argument.}
 
 \item{...}{Optional arguments passed to the chosen unit root test function.}
 }
 \value{
-A list with the following components
+An object of class \code{"bootUR", "order_integration"} with the following components
 \item{\code{order_int}}{A vector with the found orders of integration of each time series.}
 \item{\code{diff_data}}{The appropriately differenced data according to \code{order_int} in the same format as the original data.}
 }
@@ -35,7 +39,8 @@ Plotting the orders of integration requires the \code{ggplot2} package to be ins
 }
 \examples{
 # Use "boot_ur" to determine the order of GDP_BE and GDP_DE
-orders_tseries <- order_integration(MacroTS[, 1:2], method = "boot_ur", B = 199)
+orders_tseries <- order_integration(MacroTS[, 1:2], method = "boot_ur", B = 199,
+do_parallel = FALSE, show_progress = FALSE)
 }
 \references{
 Smeekes, S. and Wijler, E. (2020). Unit roots and cointegration. In P. Fuleky (Ed.) \emph{Macroeconomic Forecasting in the Era of Big Data}, Chapter 17, pp. 541-584. \emph{Advanced Studies in Theoretical and Applied Econometrics}, vol. 52. Springer.

@@ -4,16 +4,17 @@
 \alias{boot_ur}
 \title{Individual Unit Root Tests without multiple testing control}
 \usage{
-boot_ur(data, level = 0.05, bootstrap = "AWB", B = 1999,
-  block_length = NULL, ar_AWB = NULL, union = TRUE, min_lag = 0,
-  max_lag = NULL, criterion = "MAIC", deterministics = NULL,
-  detrend = NULL, criterion_scale = TRUE, show_progress = TRUE,
-  do_parallel = FALSE, cores = NULL, data_name = NULL)
+boot_ur(data, data_name = NULL, bootstrap = "AWB", B = 1999,
+  block_length = NULL, ar_AWB = NULL, level = NULL, union = TRUE,
+  union_quantile = 0.05, deterministics = NULL, detrend = NULL,
+  min_lag = 0, max_lag = NULL, criterion = "MAIC",
+  criterion_scale = TRUE, show_progress = TRUE, do_parallel = TRUE,
+  cores = NULL)
 }
 \arguments{
 \item{data}{A \eqn{T}-dimensional vector or a (\eqn{T} x \eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations to be tested for unit roots. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}), or a data frame, as long as each column represents a single time series.}
 
-\item{level}{Desired significance level of the unit root test. Default is 0.05.}
+\item{data_name}{Optional name for the data, to be used in the output. The default uses the name of the 'data' argument.}
 
 \item{bootstrap}{String for bootstrap method to be used. Options are
 \describe{
@@ -31,13 +32,11 @@ boot_ur(data, level = 0.05, bootstrap = "AWB", B = 1999,
 
 \item{ar_AWB}{Autoregressive parameter used in the AWB bootstrap method (\code{bootstrap = "AWB"}). Can be used to set the parameter directly rather than via the default link to the block length.}
 
+\item{level}{The desired significance level of the test (optional). This is only used for multivariate series to be able to provide a boolean vector with rejections of the null hypothesis or not for easy post-processing. Default is \code{NULL}, in which case no such vector is given.}
+
 \item{union}{Logical indicator whether or not to use bootstrap union tests (\code{TRUE}) or not (\code{FALSE}), see Smeekes and Taylor (2012). Default is \code{TRUE}.}
 
-\item{min_lag}{Minimum lag length in the augmented Dickey-Fuller regression. Default is 0.}
-
-\item{max_lag}{Maximum lag length in the augmented Dickey-Fuller regression. Default uses the sample size-based rule \eqn{12(T/100)^{1/4}}.}
-
-\item{criterion}{String for information criterion used to select the lag length in the augmented Dickey-Fuller regression. Options are: \code{"AIC"}, \code{"BIC"}, \code{"MAIC"}, \code{"MBIC"}. Default is \code{"MAIC"} (Ng and Perron, 2001).}
+\item{union_quantile}{The quantile of the bootstrap distribution used for scaling the individual statistics in the union. Ideally this should equal the desired significance level of the test. Default is 0.05. This parameter is overwritten when a significance level is provided in the argument \code{level}.}
 
 \item{deterministics}{String indicating the deterministic specification. Only relevant if \code{union = FALSE}. Options are
 
@@ -51,15 +50,19 @@ If \code{union = FALSE}, the default is adding an intercept (a warning is given)
 
 \item{detrend}{String indicating the type of detrending to be performed. Only relevant if \code{union = FALSE}. Options are: \code{"OLS"} or \code{"QD"} (typically also called GLS, see Elliott, Rothenberg and Stock, 1996). The default is \code{"OLS"}.}
 
+\item{min_lag}{Minimum lag length in the augmented Dickey-Fuller regression. Default is 0.}
+
+\item{max_lag}{Maximum lag length in the augmented Dickey-Fuller regression. Default uses the sample size-based rule \eqn{12(T/100)^{1/4}}.}
+
+\item{criterion}{String for information criterion used to select the lag length in the augmented Dickey-Fuller regression. Options are: \code{"AIC"}, \code{"BIC"}, \code{"MAIC"}, \code{"MBIC"}. Default is \code{"MAIC"} (Ng and Perron, 2001).}
+
 \item{criterion_scale}{Logical indicator whether or not to use the rescaled information criteria of Cavaliere et al. (2015) (\code{TRUE}) or not (\code{FALSE}). Default is \code{TRUE}.}
 
 \item{show_progress}{Logical indicator whether a bootstrap progress update should be printed to the console. Default is FALSE.}
 
-\item{do_parallel}{Logical indicator whether bootstrap loop should be executed in parallel. Parallel computing is only available if OpenMP can be used, if not this option is ignored. Default is FALSE.}
+\item{do_parallel}{Logical indicator whether bootstrap loop should be executed in parallel. Default is TRUE.}
 
 \item{cores}{The number of cores to be used in the parallel loops. Default is to use all but one.}
-
-\item{data_name}{Optional name for the data, to be used in the output. The default uses the name of the 'data' argument.}
 }
 \value{
 An object of class \code{"bootUR"}, \code{"\*"}, where \code{"\*"} is \code{"mult_htest"} for multiple time series or \code{"htest"} for single time series, with the following components:
@@ -67,10 +70,10 @@ An object of class \code{"bootUR"}, \code{"\*"}, where \code{"\*"} is \code{"mul
 \item{\code{data.name}}{The name of the data on which the method is performed;}
 \item{\code{null.value}}{The value of the (gamma) parameter of the lagged dependent variable in the ADF regression under the null hypothesis. Under the null, the series has a unit root. Testing the null of a unit root then boils down to testing the significance of the gamma parameter;}
 \item{\code{alternative}}{A character string specifying the direction of the alternative hypothesis relative to the null value. The alternative postulates that the series is stationary;}
-\item{\code{estimate}}{The estimated value(s) of the (gamma) parameter of the lagged dependent variable in the ADF regressions. Note that for the union test (\code{union = TRUE}), this estimate is not defined, hence NA is returned;}
+\item{\code{estimate}}{The estimated value(s) of the (gamma) parameter of the lagged dependent variable in the ADF regressions. Note that for the union test (\code{union = TRUE}), this estimate is not defined, hence \code{NA} is returned;}
 \item{\code{statistic}}{The value(s) of the test statistic of the unit root test(s);}
 \item{\code{p.value}}{The p-value(s) of the unit root test(s);}
-\item{\code{rejections}}{For \code{"mult_htest"} only. A vector with logical indicators for each time series whether the null hypothesis of a unit root is rejected (\code{TRUE}) or not (\code{FALSE});}
+\item{\code{rejections}}{For \code{"mult_htest"} only. A vector with logical indicators for each time series whether the null hypothesis of a unit root is rejected (\code{TRUE}) or not (\code{FALSE}). This is only supplied when an optional significance level is given, otherwise \code{NULL} is returned;}
 \item{\code{details}}{For \code{"mult_htest"} only. The details of the performed tests in a matrix containing parameter estimate. test statistic and p-value for each time series.}
 \item{\code{series.names}}{For \code{"mult_htest"} only. The names of the series that the tests are performed on.}
 }
@@ -94,7 +97,8 @@ The function may give the following warnings.
 
 \examples{
 # boot_ur on GDP_BE and GDP_DE
-two_series_boot_ur <- boot_ur(MacroTS[, 1:2], bootstrap = "MBB", B = 399)
+two_series_boot_ur <- boot_ur(MacroTS[, 1:2], bootstrap = "MBB", B = 199,
+                              do_parallel = FALSE, show_progress = FALSE)
 print(two_series_boot_ur)
 }
 \references{

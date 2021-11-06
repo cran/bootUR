@@ -21,8 +21,9 @@
 #' @examples
 #' # standard ADF test on GDP_BE
 #' GDP_BE_adf <- adf(MacroTS[, 1], deterministics = "trend")
-adf <- function(data, min_lag = 0, max_lag = NULL, criterion = "MAIC", deterministics = "intercept",
-                criterion_scale = TRUE, two_step = TRUE, data_name = NULL){
+adf <- function(data, data_name = NULL, deterministics = "intercept", min_lag = 0,
+                max_lag = NULL, criterion = "MAIC",
+                criterion_scale = TRUE, two_step = TRUE){
 
   if (NCOL(data) > 1) {
     stop("Multiple time series not allowed. Switch to a multivariate method such as boot_ur,
@@ -70,7 +71,8 @@ adf <- function(data, min_lag = 0, max_lag = NULL, criterion = "MAIC", determini
     stop("The argument deterministics should be equal to either none, intercept, trend:
            (none: no deterministics, intercept: intercept only, trend: intercept and trend)")
   }
-  dc_int <- 0*(deterministics=="none") + 1*(deterministics=="intercept") + 2*(deterministics=="trend")
+  dc_int <- 0*(deterministics=="none") + 1*(deterministics=="intercept") +
+    2*(deterministics=="trend")
 
   detr <- "OLS"
   detr_int <- 1
@@ -83,12 +85,13 @@ adf <- function(data, min_lag = 0, max_lag = NULL, criterion = "MAIC", determini
                                             range = range_nonmiss)
   } else {
     tests_and_params <- adf_onestep_tests_panel_cpp(y, pmin = min_lag, pmax = max_lag,
-                                                    ic = ic, dc = dc_int, ic_scale = criterion_scale,
+                                                    ic = ic, dc = dc_int,
+                                                    ic_scale = criterion_scale,
                                                     h_rs = 0.1, range = range_nonmiss)
   }
 
   # Collect estimate, test statistic and pvalue ADF test
-  tstat <- tests_and_params$tests # Test statistics
+  tstat <- drop(tests_and_params$tests) # Test statistics
   attr(tstat, "names") <- "tstat"
   param <- c(tests_and_params$par) # Parameter estimates
   attr(param, "names") <- "gamma"
@@ -98,11 +101,12 @@ adf <- function(data, min_lag = 0, max_lag = NULL, criterion = "MAIC", determini
          "intercept" = urtype <- "c",
          "none"  =  urtype <- "nc")
 
-  p_val <- urca::punitroot(q = tstat, N = TT - max_lag - 1, trend = urtype, statistic = "t")
+  p_val <- drop(urca::punitroot(q = tstat, N = TT - max_lag - 1, trend = urtype, statistic = "t"))
+  attr(p_val, "names") <- "p-value"
 
   adf_out <- list(method = "ADF test on a single time series", data.name = data_name,
                   null.value = c("gamma" = 0), alternative = "less",
-                  estimate = param, statistic = tstat, p.value = p_val)
+                  estimate = drop(param), statistic = tstat, p.value = p_val)
   class(adf_out) <- c("bootUR", "htest")
 
   return(adf_out)

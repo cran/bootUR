@@ -24,7 +24,11 @@ diff_mult <- function(data, d, keep_NAs = TRUE) {
   diffed_data <- data
   diffed_data[] <- diffed_x
   if (!keep_NAs & (max(d) > 0)) {
-    diffed_data <- diffed_data[-(1:max(d)), ]
+    if (NCOL(diffed_data) > 1) {
+      diffed_data <- diffed_data[-(1:max(d)), ]
+    } else if (NCOL(diffed_data) == 1) {
+      diffed_data <- diffed_data[-(1:max(d))]
+    }
   }
   return(diffed_data)
 }
@@ -34,7 +38,9 @@ diff_mult <- function(data, d, keep_NAs = TRUE) {
 #' @param data A (\eqn{T}x\eqn{N})-matrix of \eqn{N} time series with \eqn{T} observations. Data may also be in a time series format (e.g. \code{ts}, \code{zoo} or \code{xts}) or data frame.
 #' @param max_order The maximum order of integration of the time series. Default is 2.
 #' @param method The unit root tests to be used in the procedure. For multiple time series the options are "boot_ur", "boot_sqt" and "boot_fdr", with "boot_ur" the default. For single time series the options are "adf", boot_adf", "boot_union" and "boot_ur", with the latter the default.
+#' @param level Desired significance level of the unit root test. Default is 0.05.
 #' @param plot_orders Logical indicator whether the resulting orders of integration should be plotted. Default is \code{FALSE}.
+#' @param data_name Optional name for the data, to be used in the output. The default uses the name of the 'data' argument.
 #' @param ... Optional arguments passed to the chosen unit root test function.
 #' @details The function follows the approach laid out in Smeekes and Wijler (2020), where all series is differenced \eqn{d-1} times, where \eqn{d} is the specified maximum order, and these differenced series are tested for unit roots. The series for which the unit root null is not rejected, are classified as \eqn{I(d)} and removed from consideration. The remaining series are integrated, and tested for unit roots again, leading to a classification of \eqn{I(d-1)} series if the null is not rejected. This is continued until a non-rejection is observed for all time series, or the series are integrated back to their original level. The series for which the null hypothesis is rejected in the final stage are classified as \eqn{I(0)}.
 #'
@@ -42,14 +48,16 @@ diff_mult <- function(data, d, keep_NAs = TRUE) {
 #'
 #' Plotting the orders of integration requires the \code{ggplot2} package to be installed; plot will be skipped and a warning is given if not. For plots the function \code{\link{plot_order_integration}} is called. The user may prefer to set \code{plot_orders = FALSE} and call this function directly using the returned value of \code{order_int} in order to have more control over plot settings and save the plot object.
 #' @export
-#' @return A list with the following components
+#' @return An object of class \code{"bootUR", "order_integration"} with the following components
 #' \item{\code{order_int}}{A vector with the found orders of integration of each time series.}
 #' \item{\code{diff_data}}{The appropriately differenced data according to \code{order_int} in the same format as the original data.}
 #' @references Smeekes, S. and Wijler, E. (2020). Unit roots and cointegration. In P. Fuleky (Ed.) \emph{Macroeconomic Forecasting in the Era of Big Data}, Chapter 17, pp. 541-584. \emph{Advanced Studies in Theoretical and Applied Econometrics}, vol. 52. Springer.
 #' @examples
 #' # Use "boot_ur" to determine the order of GDP_BE and GDP_DE
-#' orders_tseries <- order_integration(MacroTS[, 1:2], method = "boot_ur", B = 199)
-order_integration <- function(data, max_order = 2, method = "boot_ur", plot_orders = FALSE, ...) {
+#' orders_tseries <- order_integration(MacroTS[, 1:2], method = "boot_ur", B = 199,
+#' do_parallel = FALSE, show_progress = FALSE)
+order_integration <- function(data, max_order = 2, method = "boot_ur", level = 0.05,
+                              plot_orders = FALSE, data_name = NULL, ...) {
   N <- NCOL(data)
   if (!is.null(colnames(data))) {
     var_names <- colnames(data)
@@ -58,34 +66,63 @@ order_integration <- function(data, max_order = 2, method = "boot_ur", plot_orde
   }
   d <- rep(NA, N)
   names(d) <- var_names
-  datad <- data
+  data_mat <- as.matrix(data)
+  datad <- data_mat
   i_in_datad <- 1:N
   for (d_i in (max_order - 1):0) {
-    datad <- diff_mult(data[, i_in_datad], rep(d_i, length(i_in_datad)), keep_NAs = FALSE)
+    datad <- diff_mult(data_mat[, i_in_datad], rep(d_i, length(i_in_datad)), keep_NAs = FALSE)
     if (method == "boot_ur") {
-      out <- boot_ur(datad, ...)
+      out <- boot_ur(datad, level = level, ...)
     } else if (method == "boot_fdr" & N > 1) {
-      out <- boot_fdr(datad, ...)
+      user_arguments <- list(...)
+      if ("FDR_level" %in% names(user_arguments)) {
+        warning(paste0("Argument 'FDR_level' overwritten by 'level' with value ", level, "."))
+        user_arguments$FDR_level <- level
+        user_arguments$data <- datad
+        out <- do.call(boot_fdr, user_arguments)
+      } else {
+        out <- boot_fdr(datad, FDR_level = level, ...)
+      }
+    } else if (method == "boot_fdr" & N == 1) {
+      stop("Invalid 'method' argument: 'boot_fdr' not designed for single time series.")
     } else if (method == "boot_sqt" & N > 1) {
-      out <- boot_sqt(datad, ...)
+      user_arguments <- list(...)
+      if ("SQT_level" %in% names(user_arguments)) {
+        warning(paste0("Argument 'SQT_level' overwritten by 'level' with value ", level, "."))
+        user_arguments$SQT_level <- level
+        user_arguments$data <- datad
+        out <- do.call(boot_sqt, user_arguments)
+      } else {
+        out <- boot_sqt(datad, SQT_level = level, ...)
+      }
+    } else if (method == "boot_sqt" & N == 1) {
+      stop("Invalid 'method' argument: 'boot_sqt' not designed for single time series.")
     } else if (method == "boot_adf" & N == 1) {
-      out <- boot_adf(datad, ...)
+      test_out <- boot_adf(datad, ...)
+      out <- list("rejections" = test_out$p.value < level)
+    } else if (method == "boot_adf" & N > 1) {
+      stop("Invalid 'method' argument: 'boot_adf' not designed for multipe time series; use 'boot_ur' instead.")
     } else if (method == "boot_union" & N == 1) {
-      out <- boot_union(datad, ...)
+      test_out <- boot_union(datad, union_quantile = level, ...)
+      out <- list("rejections" = test_out$p.value < level)
+    } else if (method == "boot_union" & N > 1) {
+      stop("Invalid 'method' argument: 'boot_union' not designed for multipe time series; use 'boot_ur' instead.")
     } else if (method == "adf" & N == 1) {
-      out <- adf(datad, ...)
-    } else if (method == "iADFtest") {
+      test_out <- adf(datad, ...)
+      out <- list("rejections" = test_out$p.value < level)
+    } else if (method == "adf" & N > 1) {
+        rejections <- apply(datad, 2, function(x){
+          return(adf(x, ...)$p.value < level)
+        })
+        out <- list("rejections" = rejections)
+      } else if (method == "iADFtest") {
       stop("'iADFtest' is deprecated. Use 'boot_ur' instead.")
-#      out <- iADFtest(datad, ...)
     } else if (method == "bFDRtest" & N > 1) {
       stop("'bFDRtest' is deprecated. Use 'boot_fdr' instead.")
-#      out <- bFDRtest(datad, ...)
     } else if (method == "BSQTtest" & N > 1) {
       stop("'BSQTtest' is deprecated. Use 'boot_sqt' instead.")
-#      out <- BSQTtest(datad, ...)
     } else if (method == "boot_df" & N == 1) {
       stop("'boot_df' is deprecated. Use 'boot_adf' instead.")
-#      out <- boot_df(datad, ...)
     } else {
       stop("Invalid 'method' argument.")
     }
@@ -100,20 +137,22 @@ order_integration <- function(data, max_order = 2, method = "boot_ur", plot_orde
       break
     }
   }
+  diffed_object <- list(order_int = d, diff_data = diff_mult(data, d))
+  class(diffed_object) <- c("bootUR", "order_integration")
   if (plot_orders) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
       warning("Cannot plot orders of integration as package ggplot2 not installed.")
     } else {
-      g <- plot_order_integration(d)
+      g <- plot_order_integration(diffed_object)
       print(g)
     }
   }
-  return(list(order_int = d, diff_data = diff_mult(data, d)))
+  return(diffed_object)
 }
 
 #' Plot Orders of Integration
 #' @description Plots a vector with orders of integration of time series.
-#' @param d T\eqn{N}-dimensional vector with time series' orders of integration. Elements should be named after the respective time series to ensure easy interpretation of the plot.
+#' @param orders A \code{"bootUR", "order_integration"} object obtained from the function \code{order_integration}, or a vector with found orders of integration.
 #' @param show_names Show the time series' names on the plot (\code{TRUE}) or not (\code{FALSE}). Default is \code{TRUE}.
 #' @param show_legend Logical indicator whether a legend should be displayed. Default is \code{TRUE}.
 #' @param names_size Size of the time series' names if \code{show_names = TRUE}. Default takes \code{ggplot2} defaults.
@@ -122,56 +161,67 @@ order_integration <- function(data, max_order = 2, method = "boot_ur", plot_orde
 #' @export
 #' @details This function requires the package \code{ggplot2} to be installed. If the package is not found, plotting is aborted.
 #' @return A \code{ggplot2} object containing the plot of the orders of integration.
-plot_order_integration <- function(d, show_names = TRUE, show_legend = TRUE,
+#' @seealso \code{\link{order_integration}}
+plot_order_integration <- function(orders, show_names = TRUE, show_legend = TRUE,
                                    names_size = NULL, legend_size = NULL, cols = NULL) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Cannot plot orders of integration as package ggplot2 not installed.")
-  } else {
-    if (is.null(cols)) {
-      cols <- c("#1B9E77", "#7570B3", "#D95F02", "#E7298A")
-    }
-    if (max(d) > length(cols)) {
-      stop("Insufficient number of colours supplied to display all orders of integration.")
-    }
-    cols <- cols[unique(d) + 1]
-    n_g <- floor(max(1, length(d) - 5)^(1/3))
-    group <- rep(paste0("g", 1:n_g), each = ceiling(length(d) / n_g))[1:length(d)]
-    df <- data.frame(names = factor(names(d), levels = rev(names(d))),
-                     order = paste0("I(", d, ")"), group = group)
-    if (show_names) {
-      g <- ggplot2::ggplot(df) +
-        ggplot2::geom_col(ggplot2::aes(x = names, y = order, fill = order),
-                          show.legend = show_legend) +
-        ggplot2::labs(y = "Order of Integration", x = "Variables") +
-        ggplot2::coord_flip() +
-        ggplot2::scale_fill_manual(values = cols) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
-                       panel.grid.minor = ggplot2::element_blank(),
-                       legend.title = ggplot2::element_blank(),
-                       legend.text = ggplot2::element_text(size = legend_size),
-                       axis.text.x = ggplot2::element_text(size = names_size))
-    } else {
-      g <- ggplot2::ggplot(df) +
-        ggplot2::geom_col(ggplot2::aes(x = names, y = order, fill = order),
-                          show.legend = show_legend) +
-        ggplot2::labs(y = "Order of Integration", x = "Variables") +
-        ggplot2::coord_flip() +
-        ggplot2::scale_fill_manual(values = cols) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
-                       panel.grid.minor = ggplot2::element_blank(),
-                       legend.title = ggplot2::element_blank(),
-                       legend.text = ggplot2::element_text(size = legend_size),
-                       axis.text.x = ggplot2::element_blank())
-    }
-
-    if (n_g > 1) {
-      g <- g + ggplot2::facet_wrap(ggplot2::vars(df$group), nrow = 1, scales = "free_y") +
-        ggplot2::theme(strip.text = ggplot2::element_blank())
-    }
-    return(g)
   }
+  if (all(class(orders) ==  c("bootUR", "order_integration"))) {
+    d <- orders$order_int
+  } else {
+    if (is.vector(orders, mode = "numeric")) {
+      d <- orders
+    } else {
+      stop("Argument 'orders' is not an object of class 'bootUR', 'order_integration', nor a numeric vector.")
+    }
+  }
+  if (is.null(cols)) {
+    cols <- c("#1B9E77", "#7570B3", "#D95F02", "#E7298A")
+  }
+  if (max(d) > length(cols)) {
+    stop("Insufficient number of colours supplied to display all orders of integration.")
+  }
+  if (is.null(names(d))) {
+    names(d) <- paste0("Var", 1:length(d))
+  }
+  cols <- cols[unique(d) + 1]
+  n_g <- floor(max(1, length(d) - 5)^(1/3))
+  group <- rep(paste0("g", 1:n_g), each = ceiling(length(d) / n_g))[1:length(d)]
+  df <- data.frame(names = factor(names(d), levels = rev(names(d))),
+                   order = paste0("I(", d, ")"), group = group)
+  if (show_names) {
+    g <- ggplot2::ggplot(df) +
+      ggplot2::geom_col(ggplot2::aes(x = names, y = order, fill = order),
+                        show.legend = show_legend) +
+      ggplot2::labs(y = "Order of Integration", x = "Variables") +
+      ggplot2::coord_flip() +
+      ggplot2::scale_fill_manual(values = cols) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     legend.title = ggplot2::element_blank(),
+                     legend.text = ggplot2::element_text(size = legend_size),
+                     axis.text.x = ggplot2::element_text(size = names_size))
+  } else {
+    g <- ggplot2::ggplot(df) +
+      ggplot2::geom_col(ggplot2::aes(x = names, y = order, fill = order),
+                        show.legend = show_legend) +
+      ggplot2::labs(y = "Order of Integration", x = "Variables") +
+      ggplot2::coord_flip() +
+      ggplot2::scale_fill_manual(values = cols) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     legend.title = ggplot2::element_blank(),
+                     legend.text = ggplot2::element_text(size = legend_size),
+                     axis.text.x = ggplot2::element_blank())
+  }
+  if (n_g > 1) {
+    g <- g + ggplot2::facet_wrap(ggplot2::vars(df$group), nrow = 1, scales = "free_y") +
+      ggplot2::theme(strip.text = ggplot2::element_blank())
+  }
+  return(g)
 }
 
 #' Check Missing Values in Sample
