@@ -1,7 +1,7 @@
 Package: bootUR
 Type: Package
 Title: Bootstrap Unit Root Tests
-Version: 0.4.1
+Version: 0.4.2
 Authors@R: c(
    person("Stephan", "Smeekes", email = "s.smeekes@maastrichtuniversity.nl", role = c("cre", "aut"), 
    comment = c(ORCID = "0000-0002-0157-639X")),
@@ -26,8 +26,8 @@ Suggests: knitr, rmarkdown, testthat, ggplot2
 VignetteBuilder: knitr
 SystemRequirements: GNU make
 NeedsCompilation: yes
-Packaged: 2021-11-05 22:02:02 UTC; stephan
+Packaged: 2021-11-25 10:40:22 UTC; stephan
 Author: Stephan Smeekes [cre, aut] (<https://orcid.org/0000-0002-0157-639X>),
   Ines Wilms [aut]
 Repository: CRAN
-Date/Publication: 2021-11-06 14:50:08 UTC
+Date/Publication: 2021-11-25 11:00:02 UTC
