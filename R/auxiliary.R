@@ -104,30 +104,37 @@ do_tests_and_bootstrap <- function(data, boot_sqt_test, boot_ur_test, level, boo
                           joint = joint, show_progress = show_progress,
                           do_parallel = do_parallel)
 
-  tests_and_params <- adf_tests_panel_cpp(data, pmin = min_lag, pmax = max_lag, ic = ic,
-                                          dc = dc, detr = detr_int, ic_scale = criterion_scale,
-                                          h_rs = h_rs, range = range_nonmiss)
-  tests_i<- tests_and_params$tests # Test statistics
-  params_i <- tests_and_params$par # Parameter estimates
+  tests <- adf_tests_panel_cpp(data, pmin = min_lag, pmax = max_lag, ic = ic,
+                               dc = dc, detr = detr_int, ic_scale = criterion_scale,
+                               h_rs = h_rs, range = range_nonmiss)
+  tests_ind <- tests$tests # Individual test statistics
+  par_est_ind <- tests$par # Parameter estimates
+  lags_ind <- tests$lags   # Selected lag lengths
 
+  pvals <- matrix(iADF_cpp(matrix(tests_ind, nrow = 1),
+                  matrix(t_star, nrow = B)), nrow = N, ncol = 4, byrow = TRUE)
   if (union) {
+    pvals <- matrix(iADF_cpp(matrix(tests_ind, nrow = 1),
+                             matrix(t_star, nrow = B)), nrow = N, ncol = 4, byrow = TRUE)
     scaling <- scaling_factors_cpp(t_star, level)
     if (N > 1) {
       test_stats_star <- union_tests_cpp(t_star, scaling)
-      test_stats <- union_tests_cpp(array(tests_i,
-                                          dim = c(1, length(dc) * length(detr_int), N)),
+      test_stats <- union_tests_cpp(array(tests_ind, dim = c(1, length(dc) * length(detr_int), N)),
                                     scaling)
     } else {
       test_stats_star <- union_test_cpp(t_star[, , 1], scaling)
-      test_stats <- union_test_cpp(array(tests_i,
+      test_stats <- union_test_cpp(array(tests_ind,
                                          dim = c(1, length(dc) * length(detr_int))), scaling)
     }
   } else {
+    pvals <- matrix(iADF_cpp(matrix(tests_ind, nrow = 1),
+                             matrix(t_star, nrow = B)), nrow = N, ncol = 1, byrow = TRUE)
     test_stats_star <- NULL
     test_stats <- NULL
   }
   out <- list("y" = data, "p_vec" = p_vec, "t_star" = t_star, "test_stats_star" = test_stats_star,
-              "tests_i" = tests_i, "param_i" = params_i,"test_stats" = test_stats,
+              "indiv_test_stats" = tests_ind, "indiv_par_est" = par_est_ind,
+              "indiv_pval" = pvals, "indiv_lags_stats" = lags_ind, "test_stats" = test_stats,
               "level" = level, "dc" = dc, "detr" = detr, "inputs" = list_inputs)
 
   return(out)
@@ -380,7 +387,7 @@ print.mult_htest <- function(x, digits = max(3, getOption("digits") - 3), ...){
     }
   }
   cat("\n")
-  if (is.null(x$details)) {
+  if (x$specifications$mult_test_ctrl == "none") {
     N <- NROW(x$statistic)
     out_matrix <- matrix(nrow = N, ncol = 3)
     colnames(out_matrix) <- c("estimate", "statistic", "p-value")
@@ -404,7 +411,91 @@ print.mult_htest <- function(x, digits = max(3, getOption("digits") - 3), ...){
     print(out_matrix, digits = digits, ...)
   } else {
     cat("Sequence of tests:", "\n")
-    print(x$details, digits = digits, ...)
+    print(x$details[[x$specifications$mult_test_ctrl]], digits = digits, ...)
+  }
+  cat("\n")
+  invisible(x)
+}
+
+#' Printing Summary Output for Objects of class bootUR
+#' @description This function prints summary output for objects of class bootUR (for unit root testing)
+#' @export
+#' @keywords internal
+print.bootUR <- function(x, digits = max(3, getOption("digits") - 3), ...){
+  cat("\n")
+  cat(strwrap(x$method, prefix = "\t"), sep = "\n")
+  cat("\n")
+  cat("data: ", x$data.name, "\n", sep = "")
+  N <- NROW(x$statistic)
+
+  if (!is.null(x$details$txt_null)) {
+    cat("null hypothesis: ")
+    cat(x$details$txt_null, "\n", sep = "")
+  }
+  if (!is.null(x$details$txt_alternative)) {
+    cat("alternative hypothesis: ")
+    cat(x$details$txt_alternative, "\n", sep = "")
+  } else if (!is.null(x$alternative)) {
+    cat("alternative hypothesis: ")
+    if (!is.null(x$null.value)) {
+      alt.char <- switch(x$alternative,
+                         two.sided = "not equal to",
+                         less = "less than",
+                         greater = "greater than")
+      cat("true ", names(x$null.value), " is ", alt.char, " ", x$null.value, "\n", sep = "")
+    } else {
+      cat(x$alternative, "\n", sep = "")
+    }
+  }
+  cat("\n")
+  if ("mult_test_ctrl" %in% names(x$specifications)) {
+    if (x$specifications$mult_test_ctrl == "none") {
+      out_matrix <- matrix(nrow = N, ncol = 3)
+      colnames(out_matrix) <- c("estimate largest root", "statistic", "p-value")
+      rownames(out_matrix) <- x$series.names
+      if (!is.null(x$estimate)) {
+        out_matrix[, 1] <- x$estimate + 1
+      } else{
+        out_matrix[, 1] <- NA
+      }
+      if (!is.null(x$statistic)) {
+        out_matrix[, 2] <- x$statistic
+      } else{
+        out_matrix[, 2] <- NA
+      }
+      if (!is.null(x$p.value)) {
+        out_matrix[, 3] <- x$p.value
+      } else{
+        out_matrix[, 3] <- NA
+      }
+      if (N > 1) {
+        cat("Tests performed on each series:", "\n")
+      }
+      print(out_matrix, digits = digits, ...)
+    } else {
+      cat("Sequence of tests:", "\n")
+      print(x$details[[x$specifications$mult_test_ctrl]], digits = digits, ...)
+    }
+  } else {
+    out_matrix <- matrix(nrow = N, ncol = 3)
+    colnames(out_matrix) <- c("estimate largest root", "statistic", "p-value")
+    rownames(out_matrix) <- x$series.names
+    if (!is.null(x$estimate)) {
+      out_matrix[, 1] <- x$estimate + 1
+    } else{
+      out_matrix[, 1] <- NA
+    }
+    if (!is.null(x$statistic)) {
+      out_matrix[, 2] <- x$statistic
+    } else{
+      out_matrix[, 2] <- NA
+    }
+    if (!is.null(x$p.value)) {
+      out_matrix[, 3] <- x$p.value
+    } else{
+      out_matrix[, 3] <- NA
+    }
+    print(out_matrix, digits = digits, ...)
   }
   cat("\n")
   invisible(x)

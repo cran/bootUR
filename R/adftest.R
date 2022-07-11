@@ -14,6 +14,7 @@
 #' \item{\code{estimate}}{The estimated value of the (gamma) parameter of the lagged dependent variable in the ADF regression;}
 #' \item{\code{statistic}}{The value of the test statistic of the ADF unit root test;}
 #' \item{\code{p.value}}{The p-value of the ADF unit root test.}
+#' \item{\code{specifications}}{The specifications used in the test.}
 #' @section Errors and warnings:
 #' \describe{
 #' \item{\code{Error: Multiple time series not allowed. Switch to a multivariate method such as boot_ur, or change argument data to a univariate time series.}}{The function provides a standard ADF test with asymptotic p-value. It does not support multiple time series}
@@ -54,7 +55,7 @@ adf <- function(data, data_name = NULL, deterministics = "intercept", min_lag = 
 
   if(is.null(max_lag)){
     # Correction for small samples as formula doesn't work well for micropanels
-    max_lag = round(12*(n/100)^(1/4)) - 7*max(1 - n/50, 0)*(n/100)^(1/4)
+    max_lag = round(12*(n/100)^(1/4) - 7*max(1 - n/50, 0)*(n/100)^(1/4))
   }
 
   if (any(!is.element(criterion, c("AIC", "BIC", "MAIC", "MBIC"))) | length(criterion) > 1) {
@@ -95,30 +96,35 @@ adf <- function(data, data_name = NULL, deterministics = "intercept", min_lag = 
   attr(tstat, "names") <- "tstat"
   param <- c(tests_and_params$par) # Parameter estimates
   attr(param, "names") <- "gamma"
-
   switch(deterministics,
          "trend" = urtype <- "ct",
          "intercept" = urtype <- "c",
          "none"  =  urtype <- "nc")
-  p_val <- drop(urca::punitroot(q = tstat, N = TT - max_lag - 1, trend = urtype, statistic = "t"))
+  p_val <- drop(urca::punitroot(q = tstat, N = max(TT - max_lag - 1, 20),
+                                trend = urtype, statistic = "t"))
   attr(p_val, "names") <- "p-value"
-  
+
+  details <- list("individual estimates" = drop(param),
+                  "individual statistics" = tstat,
+                  "individual p-values" = p_val,
+                  "selected lags" = drop(tests_and_params$lags),
+                  "txt_null" = "Series has a unit root",
+                  "txt_alternative" = "Series is stationary")
+
   spec <- list("deterministics" = deterministics, "min_lag" = min_lag, "max_lag" = max_lag,
                "criterion" = criterion, "criterion_scale" = criterion_scale, "two_step" = two_step)
-  switch(deterministics,
-         "trend" = deterministics <- "intercept and trend",
-         "intercept" = deterministics <- "intercept",
-         "none"  =  deterministics <- "no deterministics")
+
   if(two_step){
-    method_name <- paste("Two-step ADF test ( with" , deterministics,") on a single time series")
+    method_name <- paste0("Two-step ADF test (with " , deterministics,") on a single time series")
   }else{
-    method_name <- paste("One-step ADF test ( with" , deterministics,") on a single time series")
+    method_name <- paste0("One-step ADF test (with " , deterministics,") on a single time series")
   }
+  
   
   adf_out <- list(method = method_name, data.name = data_name,
                   null.value = c("gamma" = 0), alternative = "less",
                   estimate = drop(param), statistic = tstat, p.value = p_val,
-                  specifications = spec)
+                  details = details, series.names = data_name, specifications = spec)
   class(adf_out) <- c("bootUR", "htest")
 
   return(adf_out)

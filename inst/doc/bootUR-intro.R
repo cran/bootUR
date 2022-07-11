@@ -60,7 +60,6 @@ boot_sqt(MacroTS, steps = 0:N, bootstrap = "AWB", B = 399, do_parallel = FALSE)
 boot_sqt(MacroTS, steps = 0:4 / 4, bootstrap = "AWB", B = 399, do_parallel = FALSE)
 
 ## ----bFDR---------------------------------------------------------------------
-N <- ncol(MacroTS)
 boot_fdr(MacroTS[, 1:10], FDR_level = 0.1, bootstrap = "BWB", B = 399, do_parallel = FALSE)
 
 ## ----orders-------------------------------------------------------------------
