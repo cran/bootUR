@@ -1,3 +1,8 @@
+## Version 1.0.2
+
+### Bug Fixes
+* Fixed the CRAN check Additional Issues LTO warnings by avoiding the use of arma::cube in C++ code.
+
 ## Version 1.0.0
 
 ### New Functionality
