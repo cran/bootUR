@@ -50,7 +50,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -339,7 +339,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Introduction to bootUR</h1>
 <h4 class="author">Stephan Smeekes and Ines Wilms</h4>
-<h4 class="date">26 January, 2024</h4>
+<h4 class="date">19 May, 2024</h4>
 
 
 
@@ -358,8 +358,9 @@ installed from GitHub using</p>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;smeekes/bootUR&quot;</span>)</span></code></pre></div>
 <p>When installing from GitHub, in order to build the package from
 source, you need to have the appropriate R development tools installed
-(such as <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a> on
-Windows.)</p>
+(<a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a> on
+Windows, or <a href="https://mac.r-project.org/tools/">these tools</a>
+on Mac).</p>
 <p>If you want the vignette to appear in your package when installing
 from GitHub, use</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># install.packages(&quot;devtools&quot;)</span></span>
@@ -412,10 +413,10 @@ start and end points as follows:</p>
 <span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; last      100     100     100     100     100     100   100   100   100   100</span></span>
 <span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt;       UR_UK</span></span>
 <span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; first     1</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; last    100</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co"># Gives TRUE if the time series all start and end at the same observation:</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>sample_check<span class="sc">$</span>all_equal</span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; last    100</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Gives TRUE if the time series all start and end at the same observation:</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>sample_check<span class="sc">$</span>all_equal</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 </div>
 <div id="visualizing-missing-data" class="section level3">
 <h3>Visualizing Missing Data</h3>
@@ -423,7 +424,7 @@ start and end points as follows:</p>
 missing data patterns in your series to get a quick overview. You may
 need to manipulate some arguments to get the plot properly sized
 (therefore it is not run here automatically).</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">plot_missing_values</span>(MacroTS, <span class="at">show_names =</span> <span class="cn">TRUE</span>, <span class="at">axis_text_size =</span> <span class="dv">5</span>, <span class="at">legend_size =</span> <span class="dv">6</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">plot_missing_values</span>(MacroTS, <span class="at">show_names =</span> <span class="cn">TRUE</span>, <span class="at">axis_text_size =</span> <span class="dv">5</span>, <span class="at">legend_size =</span> <span class="dv">6</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="augmented-dickey-fuller-test" class="section level2">
@@ -456,17 +457,17 @@ desired lag length.</p>
 <p><strong>Implementation</strong></p>
 <p>We illustrate the ADF test here on Dutch GDP for the two-step
 specification, including a linear trend in the specification.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>GDP_NL <span class="ot">&lt;-</span> MacroTS[, <span class="dv">4</span>]</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">adf</span>(GDP_NL, <span class="at">deterministics =</span> <span class="st">&quot;trend&quot;</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt;  Two-step ADF test (with trend) on a single time series</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; data: GDP_NL</span></span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; GDP_NL                0.9471    -2.515  0.3202</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>GDP_NL <span class="ot">&lt;-</span> MacroTS[, <span class="dv">4</span>]</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">adf</span>(GDP_NL, <span class="at">deterministics =</span> <span class="st">&quot;trend&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;  Two-step ADF test (with trend) on a single time series</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; data: GDP_NL</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; GDP_NL                0.9471    -2.515  0.3202</span></span></code></pre></div>
 </div>
 <div id="univariate-bootstrap-unit-root-tests" class="section level2">
 <h2>Univariate Bootstrap Unit Root Tests</h2>
@@ -499,21 +500,21 @@ bootstrap loop can be run in parallel by setting
 <p>As random number generation is required to draw bootstrap samples, we
 first set the seed of the random number generator to obtain replicable
 results.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">155776</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">boot_adf</span>(GDP_NL, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">bootstrap =</span> <span class="st">&quot;SB&quot;</span>, <span class="at">deterministics =</span> <span class="st">&quot;trend&quot;</span>, </span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                    <span class="at">detrend =</span> <span class="st">&quot;OLS&quot;</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt;  SB bootstrap OLS test (with intercept and trend) on a single time</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt;  series</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; data: GDP_NL</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt; GDP_NL                0.9471    -2.515  0.1454</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">155776</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">boot_adf</span>(GDP_NL, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">bootstrap =</span> <span class="st">&quot;SB&quot;</span>, <span class="at">deterministics =</span> <span class="st">&quot;trend&quot;</span>, </span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>                    <span class="at">detrend =</span> <span class="st">&quot;OLS&quot;</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt;  SB bootstrap OLS test (with intercept and trend) on a single time</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt;  series</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; data: GDP_NL</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt; GDP_NL                0.9471    -2.515  0.1454</span></span></code></pre></div>
 </div>
 <div id="union-of-rejections-test" class="section level3">
 <h3>Union of Rejections Test</h3>
@@ -525,18 +526,18 @@ advantage of the union test is that you don’t have to specify these
 safe option for quick or automatic unit root testing where careful
 manual specification setup is not viable. Here we illustrate it with the
 sieve wild bootstrap as proposed by Smeekes and Taylor (2012).</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">boot_union</span>(GDP_NL, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">bootstrap =</span> <span class="st">&quot;SWB&quot;</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;  SWB bootstrap union test on a single time series</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; data: GDP_NL</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; GDP_NL                    NA   -0.7115   0.614</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">boot_union</span>(GDP_NL, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">bootstrap =</span> <span class="st">&quot;SWB&quot;</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;  SWB bootstrap union test on a single time series</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; data: GDP_NL</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; GDP_NL                    NA   -0.7115   0.614</span></span></code></pre></div>
 </div>
 </div>
 <div id="panel-unit-root-test" class="section level2">
@@ -553,8 +554,8 @@ and Urbain (2011).</p>
 block bootstrap (<code>bootstrap = &quot;MBB&quot;</code>). However, this
 resampling-based method cannot handle unbalancedness, and will therefore
 give an error when applied to <code>MacroTS</code>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">boot_panel</span>(MacroTS, <span class="at">bootstrap =</span> <span class="st">&quot;MBB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; Error in check_inputs(data = data, boot_sqt_test = boot_sqt_test, boot_ur_test = boot_ur_test, : Resampling-based bootstraps MBB and SB cannot handle unbalanced series.</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">boot_panel</span>(MacroTS, <span class="at">bootstrap =</span> <span class="st">&quot;MBB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; Error in check_inputs(data = data, boot_sqt_test = boot_sqt_test, boot_ur_test = boot_ur_test, : Resampling-based bootstraps MBB and SB cannot handle unbalanced series.</span></span></code></pre></div>
 <p>Therefore, you should switch to one of the wild bootstrap methods.
 Here we illustrate it with the dependent wild bootstrap (DWB) of Shao
 (2010) and Rho and Shao (2019).</p>
@@ -567,18 +568,18 @@ the univariate Dickey-Fuller test.</p>
 among practitioners), Smeekes and Urbain (2014b) show that these are not
 suited to capture general forms of dependence across units. The code
 will give a warning to recommend using a different bootstrap method.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">boot_panel</span>(MacroTS, <span class="at">bootstrap =</span> <span class="st">&quot;DWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;  Panel DWB bootstrap group-mean union test</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; data: MacroTS</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; null hypothesis: All series have a unit root</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Some series are stationary</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;         estimate largest root statistic p-value</span></span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; MacroTS                    NA   -0.8621  0.1103</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">boot_panel</span>(MacroTS, <span class="at">bootstrap =</span> <span class="st">&quot;DWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt;  Panel DWB bootstrap group-mean union test</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt; data: MacroTS</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; null hypothesis: All series have a unit root</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Some series are stationary</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;         estimate largest root statistic p-value</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; MacroTS                    NA   -0.8621  0.1103</span></span></code></pre></div>
 </div>
 <div id="tests-for-multiple-time-series" class="section level2">
 <h2>Tests for Multiple Time Series</h2>
@@ -592,29 +593,29 @@ resampling-based bootstrap methods <code>&quot;MBB&quot;</code> and
 If they are used anyway, the function will revert to splitting the
 bootstrap up and performing it individually per time series. In this
 case a warning is given to alert the user.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>ADFtests_out <span class="ot">&lt;-</span> <span class="fu">boot_ur</span>(MacroTS[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], <span class="at">bootstrap =</span> <span class="st">&quot;MBB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">union =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>                        <span class="at">deterministics =</span> <span class="st">&quot;trend&quot;</span>, <span class="at">detrend =</span> <span class="st">&quot;OLS&quot;</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; Warning in check_inputs(data = data, boot_sqt_test = boot_sqt_test,</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; boot_ur_test = boot_ur_test, : Missing values cause resampling bootstrap to be</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; executed for each time series individually.</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="fu">print</span>(ADFtests_out)</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  MBB bootstrap ADF test (with intercept and trend) on each individual</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  series (no multiple testing correction)</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt; data: MacroTS[, 1:5]</span></span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; Tests performed on each series: </span></span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt; GDP_BE                0.9304    -2.792  0.1955</span></span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt; GDP_DE                0.8911    -2.774  0.1003</span></span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; GDP_FR                0.9655    -2.049  0.5113</span></span>
-<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; GDP_NL                0.9471    -2.515  0.1930</span></span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; GDP_UK                0.9600    -2.449  0.2882</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>ADFtests_out <span class="ot">&lt;-</span> <span class="fu">boot_ur</span>(MacroTS[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], <span class="at">bootstrap =</span> <span class="st">&quot;MBB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">union =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>                        <span class="at">deterministics =</span> <span class="st">&quot;trend&quot;</span>, <span class="at">detrend =</span> <span class="st">&quot;OLS&quot;</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; Warning in check_inputs(data = data, boot_sqt_test = boot_sqt_test,</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt; boot_ur_test = boot_ur_test, : Missing values cause resampling bootstrap to be</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; executed for each time series individually.</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">print</span>(ADFtests_out)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt;  MBB bootstrap ADF test (with intercept and trend) on each individual</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt;  series (no multiple testing correction)</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; data: MacroTS[, 1:5]</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; Tests performed on each series: </span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt;        estimate largest root statistic p-value</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt; GDP_BE                0.9304    -2.792  0.1955</span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="co">#&gt; GDP_DE                0.8911    -2.774  0.1003</span></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co">#&gt; GDP_FR                0.9655    -2.049  0.5113</span></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="co">#&gt; GDP_NL                0.9471    -2.515  0.1930</span></span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="co">#&gt; GDP_UK                0.9600    -2.449  0.2882</span></span></code></pre></div>
 <p>Note that <code>boot_ur</code> (intentionally) does not provide a
 correction for multiple testing; of course, if we perform each test with
 a significance level of 5%, the probability of making a mistake in all
@@ -657,36 +658,36 @@ very conservative if <code>N</code> is large, and you would typically
 end up not rejecting any null hypothesis. The method is illustrated with
 the autoregressive wild bootstrap of Smeekes and Urbain (2014a) and
 Friedrich, Smeekes and Urbain (2020).</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="fu">ncol</span>(MacroTS)</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># Test each unit sequentially</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="fu">boot_sqt</span>(MacroTS, <span class="at">steps =</span> <span class="dv">0</span><span class="sc">:</span>N, <span class="at">bootstrap =</span> <span class="st">&quot;AWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;  AWB bootstrap sequential quantile union test</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; data: MacroTS</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; Sequence of tests: </span></span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt;        H0: # I(0) H1: # I(0)  tstat p-value</span></span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt; Step 1          0          1 -1.661 0.02256</span></span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt; Step 2          1          2 -1.413 0.12281</span></span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co"># Split in four equally sized groups (motivated by the 4 series per country)</span></span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="fu">boot_sqt</span>(MacroTS, <span class="at">steps =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">/</span> <span class="dv">4</span>, <span class="at">bootstrap =</span> <span class="st">&quot;AWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co">#&gt;  AWB bootstrap sequential quantile union test</span></span>
-<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co">#&gt; data: MacroTS</span></span>
-<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
-<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
-<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a><span class="co">#&gt; Sequence of tests: </span></span>
-<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a><span class="co">#&gt;        H0: # I(0) H1: # I(0)  tstat p-value</span></span>
-<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a><span class="co">#&gt; Step 1          0          5 -1.052 0.05013</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="fu">ncol</span>(MacroTS)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co"># Test each unit sequentially</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="fu">boot_sqt</span>(MacroTS, <span class="at">steps =</span> <span class="dv">0</span><span class="sc">:</span>N, <span class="at">bootstrap =</span> <span class="st">&quot;AWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co">#&gt;  AWB bootstrap sequential quantile union test</span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="co">#&gt; data: MacroTS</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a><span class="co">#&gt; Sequence of tests: </span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="co">#&gt;        H0: # I(0) H1: # I(0)  tstat p-value</span></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="co">#&gt; Step 1          0          1 -1.661 0.02256</span></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="co">#&gt; Step 2          1          2 -1.413 0.12281</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Split in four equally sized groups (motivated by the 4 series per country)</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">boot_sqt</span>(MacroTS, <span class="at">steps =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">/</span> <span class="dv">4</span>, <span class="at">bootstrap =</span> <span class="st">&quot;AWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co">#&gt;  AWB bootstrap sequential quantile union test</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt; data: MacroTS</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="co">#&gt; Sequence of tests: </span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="co">#&gt;        H0: # I(0) H1: # I(0)  tstat p-value</span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="co">#&gt; Step 1          0          5 -1.052 0.05013</span></span></code></pre></div>
 </div>
 <div id="bootstrap-fdr-controlling-tests" class="section level3">
 <h3>Bootstrap FDR Controlling Tests</h3>
@@ -707,19 +708,19 @@ exception of <code>FDR_level</code> wihch controls the FDR level. As
 BSQT, the method only report those tests until no rejection occurs.</p>
 <p>We illustrate it here with the final available bootstrap method, the
 block wild bootstrap of Shao (2011) and Smeekes and Urbain (2014a).</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">boot_fdr</span>(MacroTS[, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>], <span class="at">FDR_level =</span> <span class="fl">0.1</span>, <span class="at">bootstrap =</span> <span class="st">&quot;BWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt;  BWB bootstrap union test with false discovery rate control</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; data: MacroTS[, 1:10]</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; Sequence of tests: </span></span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt;         tstat critical value</span></span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="co">#&gt; GDP_DE -1.077         -1.581</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">boot_fdr</span>(MacroTS[, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>], <span class="at">FDR_level =</span> <span class="fl">0.1</span>, <span class="at">bootstrap =</span> <span class="st">&quot;BWB&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="co">#&gt;  BWB bootstrap union test with false discovery rate control</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="co">#&gt; data: MacroTS[, 1:10]</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="co">#&gt; null hypothesis: Series has a unit root</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="co">#&gt; alternative hypothesis: Series is stationary</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co">#&gt; Sequence of tests: </span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a><span class="co">#&gt;         tstat critical value</span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co">#&gt; GDP_DE -1.077         -1.581</span></span></code></pre></div>
 </div>
 </div>
 <div id="determining-order-of-integration" class="section level2">
@@ -747,23 +748,23 @@ full specification of the orders of all time series.</p>
 <p>The function allows us to choose which unit root test we want to use.
 Here we take <code>boot_fdr</code>. We don’t only get the orders out,
 but also the appropriately differenced data.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>out_orders <span class="ot">&lt;-</span> <span class="fu">order_integration</span>(MacroTS[, <span class="dv">11</span><span class="sc">:</span><span class="dv">15</span>], <span class="at">method =</span> <span class="st">&quot;boot_fdr&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, </span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>                                <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co"># Orders</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>out_orders<span class="sc">$</span>order_int</span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="co">#&gt; HICP_BE HICP_DE HICP_FR HICP_NL HICP_UK </span></span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="co">#&gt;       0       0       1       0       1</span></span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co"># Differenced data</span></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>stationary_data <span class="ot">&lt;-</span> out_orders<span class="sc">$</span>diff_data</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>out_orders <span class="ot">&lt;-</span> <span class="fu">order_integration</span>(MacroTS[, <span class="dv">11</span><span class="sc">:</span><span class="dv">15</span>], <span class="at">method =</span> <span class="st">&quot;boot_fdr&quot;</span>, <span class="at">B =</span> <span class="dv">399</span>, </span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>                                <span class="at">do_parallel =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="co">#&gt; Progress: |------------------| </span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="co">#&gt;           ********************</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Orders</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>out_orders<span class="sc">$</span>order_int</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="co">#&gt; HICP_BE HICP_DE HICP_FR HICP_NL HICP_UK </span></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="co">#&gt;       0       0       1       0       1</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># Differenced data</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>stationary_data <span class="ot">&lt;-</span> out_orders<span class="sc">$</span>diff_data</span></code></pre></div>
 <p>To achieve the differencing, <code>order_integration()</code> uses
 the function <code>diff_mult()</code> which is also available as
 stand-alone function in the package. Finally, a function is provided to
 plot the found orders (not run):</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">plot_order_integration</span>(out_orders)</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">plot_order_integration</span>(out_orders)</span></code></pre></div>
 </div>
 </div>
 <div id="references" class="section level2">
