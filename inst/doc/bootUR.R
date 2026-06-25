@@ -5,15 +5,15 @@ knitr::opts_chunk$set(
 )
 
 ## ----install-cran, eval = FALSE-----------------------------------------------
-#  install.packages("bootUR")
+# install.packages("bootUR")
 
 ## ----install-github, eval = FALSE---------------------------------------------
-#  # install.packages("devtools")
-#  devtools::install_github("smeekes/bootUR")
+# # install.packages("devtools")
+# devtools::install_github("smeekes/bootUR")
 
 ## ----install-vign, eval = FALSE-----------------------------------------------
-#  # install.packages("devtools")
-#  devtools::install_github("smeekes/bootUR", build_vignettes = TRUE, dependencies = TRUE)
+# # install.packages("devtools")
+# devtools::install_github("smeekes/bootUR", build_vignettes = TRUE, dependencies = TRUE)
 
 ## ----load---------------------------------------------------------------------
 library(bootUR)
@@ -30,7 +30,7 @@ sample_check$range
 sample_check$all_equal
 
 ## ----plot_na, fig.height = 4, fig.width = 7, eval = FALSE---------------------
-#  plot_missing_values(MacroTS, show_names = TRUE, axis_text_size = 5, legend_size = 6)
+# plot_missing_values(MacroTS, show_names = TRUE, axis_text_size = 5, legend_size = 6)
 
 ## ----adf----------------------------------------------------------------------
 GDP_NL <- MacroTS[, 4]
@@ -71,5 +71,5 @@ out_orders$order_int
 stationary_data <- out_orders$diff_data
 
 ## ----plot_orders, fig.width = 7, fig.height = 4, eval = FALSE-----------------
-#  plot_order_integration(out_orders)
+# plot_order_integration(out_orders)
 
